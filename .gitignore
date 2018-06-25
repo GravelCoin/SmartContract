@@ -1,0 +1,3 @@
+# exclude everything except directory node_modules/ and build/
+node_modules/*
+build/*
