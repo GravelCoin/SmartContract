@@ -2,6 +2,7 @@ pragma solidity ^0.4.23;
 
 import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../node_modules/zeppelin-solidity/contracts/crowdsale/Crowdsale.sol";
+import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
 /**
@@ -10,7 +11,7 @@ import "../node_modules/zeppelin-solidity/contracts/crowdsale/Crowdsale.sol";
  * Note that what should be provided to the constructor is the initial and final _rates_, that is,
  * the amount of tokens per wei contributed. Thus, the initial rate must be greater than the final rate.
  */
-contract IncreasingPriceCrowdsale is Crowdsale {
+contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
     using SafeMath for uint256;   
 
     /* the number of tokens already sold through this contract*/
@@ -65,6 +66,21 @@ contract IncreasingPriceCrowdsale is Crowdsale {
     {        
         uint256 currentRate = getCurrentRate();
         return _weiAmount.mul(multiplier).div(currentRate);
+    }
+    
+    /* Check for sane ether to token price */
+    modifier isTokenPriceSane(uint _value){
+        require(_value > 0);
+        _;
+    }
+
+    /**
+     * only to be called by owner, updates the token price
+     * @param _oneTokenInWei new price of the one token in wei
+     *
+     */
+    function updateTokenPrice(uint _oneTokenInWei) isTokenPriceSane(_oneTokenInWei) onlyOwner external {
+        oneTokenInWei = _oneTokenInWei;
     }
 
 }
