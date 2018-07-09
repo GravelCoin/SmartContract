@@ -2,13 +2,14 @@ pragma solidity ^0.4.23;
 
 import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 // Extension of Crowdsale contract whose tokens are minted in each purchase. Token ownership should be transferred to MintedCrowdsale for minting. 
-import "../node_modules/zeppelin-solidity/contracts/crowdsale/emission/MintedCrowdsale.sol";
+import "../node_modules/zeppelin-solidity/contracts/crowdsale/emission/AllowanceCrowdsale.sol";
 import "./IncreasingPriceCrowdsale.sol";
+import "./GRVToken.sol";
 
 /**
  * Crowdsale contract of the GravelCoin
  */
-contract GRVCrowdsale is MintedCrowdsale, IncreasingPriceCrowdsale{
+contract GRVCrowdsale is AllowanceCrowdsale, IncreasingPriceCrowdsale{
     using SafeMath for uint256;
 
     // States of the crowdsale
@@ -25,7 +26,7 @@ contract GRVCrowdsale is MintedCrowdsale, IncreasingPriceCrowdsale{
     /**
      * Construct of GRVCrowdsale.
      */
-    constructor (uint256 _rate, address _wallet, MintableToken _token)
+    constructor (uint256 _rate, address _wallet, GRVToken _token)
       public  
       Crowdsale(_rate, _wallet, _token)
       // TODO: implements rules of the release block and weidh value            
