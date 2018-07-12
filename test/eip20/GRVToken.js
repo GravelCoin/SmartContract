@@ -176,7 +176,10 @@ contract('GRVToken', (accounts) => {
 
     await HST.transferFrom(accounts[0], accounts[2], 20, { from: accounts[1] });
     const allowance01 = await HST.allowance.call(accounts[0], accounts[1]);
-    assert(allowance01.equals(max),'twrr');
+    console.log("value01 = " + allowance01);
+    console.log("Value02 = " + max);
+    console.log("equal = " + allowance01.equals(max) );
+    assert(allowance01.equals(max));
 
     const balance22 = await HST.balanceOf.call(accounts[2]);
     assert.strictEqual(balance22.toNumber(), 20);
