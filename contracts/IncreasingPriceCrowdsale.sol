@@ -75,11 +75,11 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
     }
 
     /**
-     * only to be called by owner, updates the token price
+     * @dev Updates the token price, only to be called by owner, 
      * @param _oneTokenInWei new price of the one token in wei
      *
      */
-    function updateTokenPrice(uint _oneTokenInWei) isTokenPriceSane(_oneTokenInWei) onlyOwner external {
+    function updateTokenPrice(uint256 _oneTokenInWei) isTokenPriceSane(_oneTokenInWei) onlyOwner external {
         oneTokenInWei = _oneTokenInWei;
     }
 
