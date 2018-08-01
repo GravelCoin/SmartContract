@@ -13,6 +13,10 @@ contract GRVToken is CappedToken{
     string public constant symbol = "GRV";
     uint8  public constant decimals = 1;
 
+    // FIXME: change values of the team and advisor.
+    uint256 public constant TOKEN_OF_THE_TEAM = 13000000 * (10 ** uint256(decimals));
+    uint256 public constant TOKEN_OF_THE_ADVISOR = 13000000 * (10 ** uint256(decimals));
+
     uint256 public constant INITIAL_SUPPLY = 250000 * (10 ** uint256(decimals));
     uint256 public constant MAX_SUPPLY = 13000000 * (10 ** uint256(decimals));
 
