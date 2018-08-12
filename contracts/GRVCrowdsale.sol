@@ -8,7 +8,8 @@ import "./IncreasingPriceCrowdsale.sol";
 import "./GRVToken.sol";
 
 /**
- * Crowdsale contract of the GravelCoin
+ * @title GRVCrowdsale
+ * @dev Crowdsale contract of the GravelCoin
  */
 contract GRVCrowdsale is AllowanceCrowdsale, IncreasingPriceCrowdsale, Pausable{
     using SafeMath for uint256;
@@ -19,10 +20,12 @@ contract GRVCrowdsale is AllowanceCrowdsale, IncreasingPriceCrowdsale, Pausable{
      * - Preparing: All contract initialization calls and variables have not been set yet     
      * - Active: Active crowdsale     
      * - Paused: Paused crowdsale functions
+     * - ICO: 
+     * - ContinueSale: 
      * - Refunding: Refunds are loaded on the contract for reclaim.
      * - SKAMB: 
      */
-    enum State { Unknown, Preparing, Active, Paused, Refunding }
+    enum State { Unknown, Preparing, Active, Paused, ICO, ContinueSale, Refunding }
 
     // FIXME: get value from the token.
     uint256 public constant multiplier = 10 ** 1;
@@ -46,10 +49,8 @@ contract GRVCrowdsale is AllowanceCrowdsale, IncreasingPriceCrowdsale, Pausable{
     mapping (address => uint256) public tokenAmountOf;
     // How many distinct addresses have invested 
     uint256 public investorCount = 0;
-    // How much token sold
-    uint256 public tokensSold = 0;
     // state of crowdsale
-    State state = State.Unknow;
+    State state = State.Unknown;
     
     /**
      * Construct of GRVCrowdsale.
@@ -111,7 +112,7 @@ contract GRVCrowdsale is AllowanceCrowdsale, IncreasingPriceCrowdsale, Pausable{
     )
       internal whenNotPaused
     {
-        _deliverTokens(_beneficiary, _tokenAmount);        
+        super._processPurchase(_beneficiary, _tokenAmount);
         
         if(investedAmountOf[_beneficiary] == 0) {
             // A new investor
@@ -119,9 +120,7 @@ contract GRVCrowdsale is AllowanceCrowdsale, IncreasingPriceCrowdsale, Pausable{
         }
 
         // Update investor        
-        tokenAmountOf[_beneficiary].add(_tokenAmount);
-        // update token sold
-        tokensSold.add(_tokenAmount);        
+        tokenAmountOf[_beneficiary].add(_tokenAmount);            
     }   
 
     /**
@@ -163,7 +162,7 @@ contract GRVCrowdsale is AllowanceCrowdsale, IncreasingPriceCrowdsale, Pausable{
         else if (isMinimumGoalReached()) return State.Success;
         else if (!isMinimumGoalReached() && weiRaised > 0 && loadedRefund >= weiRaised) return State.Refunding;
         else return State.Failure;*/
-        else return State.Unknow;
+        else return State.Unknown;
     }
 
 }
