@@ -83,7 +83,7 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
         oneTokenInWei = _oneTokenInWei;
     }
 
-        /**
+    /**
      * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
      * @param _beneficiary Address receiving the tokens
      * @param _tokenAmount Number of tokens to be purchased

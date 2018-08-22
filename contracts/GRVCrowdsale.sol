@@ -69,6 +69,7 @@ contract GRVCrowdsale is AllowanceCrowdsale, IncreasingPriceCrowdsale, Pausable{
                  uint256 _openingTime)
       public  
       Crowdsale(_rate, _wallet, _token)
+      AllowanceCrowdsale(_wallet)
       // TODO: implements rules of the release block and weidh value            
       IncreasingPriceCrowdsale(oneTokenInWei, multiplier) {
         walletTeam = _walletTeam;
