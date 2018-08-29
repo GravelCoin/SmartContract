@@ -21,7 +21,7 @@ contract('GRVCrowdsale', (accounts) => {
 
   this.rate = new BigNumber(1);      
 
-  const value = ether(42);
+  const value = ether(1);
   const expectedTokenAmount = this.rate.mul(value);
 
   beforeEach(async () => {
@@ -46,11 +46,7 @@ contract('GRVCrowdsale', (accounts) => {
     await this.token.transfer(this.crowdsale.address, inital_value);
   });
 
-
-  it('creation: should create an initial balance of ' + inital_value + ' for the creator', async () => {
-    const balance = await this.token.balanceOf.call(accounts[0]);
-    assert.strictEqual(balance.toNumber(), inital_value);
-  });
+  
 
   describe('accepting payments', () => {
     it('should create crowdsale with correct parameters', async () => {      
@@ -73,6 +69,18 @@ contract('GRVCrowdsale', (accounts) => {
       walletAdvisor.should.be.equal(this.walletAdvisor);
       // goal.should.be.bignumber.equal(GOAL);
       // cap.should.be.bignumber.equal(CAP);
+    });
+
+    it('creation: should create an initial balance of ' + 0 + ' for the creator', async () => {
+      const balance = await this.token.balanceOf.call(accounts[0]);
+      assert.strictEqual(balance.toNumber(), 0);
+    });
+  
+    describe('accepting payments',  () => {
+      it('should accept payments', async () => {
+        await this.crowdsale.send(value).should.be.fulfilled;
+        //await this.crowdsale.buyTokens(investor, { value: value, from: purchaser }).should.be.fulfilled;
+      });
     });
 
     it('should accept payments', async () => {
