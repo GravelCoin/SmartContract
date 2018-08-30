@@ -30,6 +30,11 @@ module.exports = function(deployer, network, accounts) {
                 walletAdvisor,
                 openingTime
             );
+        }).then(() => {
+
+            var token = GRVToken.at(GRVToken.address);
+
+            token.transferOwnership(GRVCrowdsale.address);
         })
         ;
 };
