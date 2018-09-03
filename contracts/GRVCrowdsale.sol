@@ -11,7 +11,7 @@ import "./GRVToken.sol";
  * @title GRVCrowdsale
  * @dev Crowdsale contract of the GravelCoin
  */
-contract GRVCrowdsale is AllowanceCrowdsale, IncreasingPriceCrowdsale, Pausable{
+contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     using SafeMath for uint256;
 
     /** 
@@ -69,7 +69,7 @@ contract GRVCrowdsale is AllowanceCrowdsale, IncreasingPriceCrowdsale, Pausable{
                  uint256 _openingTime)
       public  
       Crowdsale(_rate, _wallet, _token)
-      AllowanceCrowdsale(_wallet)
+      //AllowanceCrowdsale(_wallet)
       // TODO: implements rules of the release block and weidh value            
       IncreasingPriceCrowdsale(oneTokenInWei, multiplier) {
         walletTeam = _walletTeam;
@@ -113,7 +113,7 @@ contract GRVCrowdsale is AllowanceCrowdsale, IncreasingPriceCrowdsale, Pausable{
     )
       internal whenNotPaused
     {
-        super._processPurchase(_beneficiary, _tokenAmount);
+        IncreasingPriceCrowdsale._processPurchase(_beneficiary, _tokenAmount);
         
         if(investedAmountOf[_beneficiary] == 0) {
             // A new investor
@@ -165,5 +165,15 @@ contract GRVCrowdsale is AllowanceCrowdsale, IncreasingPriceCrowdsale, Pausable{
         else return State.Failure;*/
         else return State.Unknown;
     }
-
+    
+    /**
+     * @dev Release new coin of the crowdsale.
+     * @param _tokenAmount amount of the coin
+     *
+     */
+    function mintToken(uint256 _tokenAmount) onlyOwner external {
+        require(_tokenAmount > 0);
+        GRVToken coin = GRVToken(token);
+        coin.mint(owner, _tokenAmount);
+    }
 }

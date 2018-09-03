@@ -3,7 +3,7 @@ pragma solidity ^0.4.23;
 import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../node_modules/zeppelin-solidity/contracts/crowdsale/Crowdsale.sol";
 import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
-
+import "./GRVToken.sol";
 
 /**
  * @title IncreasingPriceCrowdsale
@@ -13,6 +13,10 @@ import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol";
  */
 contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
     using SafeMath for uint256;   
+    
+    // FIXME: Update max blocks from the withepaper.
+    /* MAX BLOCKS OF THE CROWDSALE */
+    uint256 public constant MAX_BLOCKS_CROWDSALE = 5;
 
     /* the number of tokens already sold through this contract*/
     uint256 public tokensSold = 0;
@@ -21,6 +25,10 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
     uint256 public oneTokenInWei;
 
     uint256 public multiplier;
+    
+    /* manager release blocks... */
+    mapping (uint256 => uint256) public releaseBlock;
+    uint256 indexOfBlock = 0;
 
     /**
      * @dev Constructor, takes intial and final rates of tokens received per wei contributed.
@@ -101,6 +109,31 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
         
         // update token sold
         tokensSold.add(_tokenAmount);        
+        
+        // mnager generate the new block.
+       //_releaseNewBlockToken(_tokenAmount);
+        
     }   
+    
+    /**
+     * @dev Manager generate new release blocks of the token.
+     * @param _tokenAmount Number of tokens to be purchased
+     *
+     *
+    function _releaseNewBlockToken(
+        uint256 _tokenAmount    
+    ) 
+        internal
+    {
+        if (indexOfBlock < MAX_BLOCKS_CROWDSALE){
+            if (releaseBlock[indexOfBlock].sub(_tokenAmount) = 0 ){
+                // increment indexOfBlock
+                indexOfBlock.add(1);
+                // release new blocks
+                GRVToken coin = GRVToken(token);
+                coin.mint(owner, releaseBlock[indexOfBlock]);    
+            }
+        }
+    }*/
 
 }
