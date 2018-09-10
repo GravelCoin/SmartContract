@@ -7,7 +7,8 @@ module.exports = function(deployer, network, accounts) {
     const walletTeam = accounts[1];
     const walletAdvisor = accounts[2];
     const openingTime = web3.eth.getBlock('latest').timestamp;
-    const rate = new BigNumber(1);    
+    //const rate = new BigNumber(1);    
+    const rate = new web3.BigNumber(web3.toWei(0.0005, 'ether'));
 
     console.log("owner.address " + owner);
     console.log("walletTeam.address " + walletTeam);
@@ -35,6 +36,10 @@ module.exports = function(deployer, network, accounts) {
             var token = GRVToken.at(GRVToken.address);
 
             token.transferOwnership(GRVCrowdsale.address);
+        }).then(() =>{
+            var crowdsale = GRVCrowdsale.at(GRVCrowdsale.address);
+            crowdsale.preAllocate();
+
         })
         ;
 };

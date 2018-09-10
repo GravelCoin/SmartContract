@@ -45,21 +45,22 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
 
     /**
      * @dev Returns the rate of tokens per eth at the present tokenSold.
-     * Note that, as price _increases_ with tokenSold, the rate _decreases_.
+     * Note that, as price _increases_ with _totalSupply of the toekn, the rate _decreases_.
      * @return The number of tokens a buyer gets per eth at a given tokenSold
      *
      * /override Crowdsale.getCurrentRate
      */
      // TODO: rever tabela de preços atualizada
-    function getCurrentRate() public view returns (uint256) {        
+    function getCurrentRate() public view returns (uint256) { 
+        uint256 _totalSupply = token.totalSupply();       
         // price of U$ 0.04 - 40% of the oneToken
-        if (tokensSold <= 15000000) {return oneTokenInWei.mul(40).div(100);}
+        if (_totalSupply <= 15000000) {return oneTokenInWei.mul(40).div(100);}
         // price of U$ 0.06 - 60% of the oneToken
-        if (tokensSold <= 30000000) {return oneTokenInWei.mul(60).div(100);}
+        if (_totalSupply <= 30000000) {return oneTokenInWei.mul(60).div(100);}
         // price of U$ 0.08 - 80% of the oneToken
-        if (tokensSold <= 80000000) {return oneTokenInWei.mul(80).div(100);}
+        if (_totalSupply <= 80000000) {return oneTokenInWei.mul(80).div(100);}
         // price of U$ 0.10 - 100% of the oneToken
-        if (tokensSold <= 130000000){return oneTokenInWei;}                
+        if (_totalSupply <= 130000000){return oneTokenInWei;}                
     }
 
     /**
@@ -108,32 +109,7 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
         super._processPurchase(_beneficiary, _tokenAmount);        
         
         // update token sold
-        tokensSold.add(_tokenAmount);        
-        
-        // mnager generate the new block.
-       //_releaseNewBlockToken(_tokenAmount);
-        
+        tokensSold = tokensSold.add(_tokenAmount);
     }   
-    
-    /**
-     * @dev Manager generate new release blocks of the token.
-     * @param _tokenAmount Number of tokens to be purchased
-     *
-     *
-    function _releaseNewBlockToken(
-        uint256 _tokenAmount    
-    ) 
-        internal
-    {
-        if (indexOfBlock < MAX_BLOCKS_CROWDSALE){
-            if (releaseBlock[indexOfBlock].sub(_tokenAmount) = 0 ){
-                // increment indexOfBlock
-                indexOfBlock.add(1);
-                // release new blocks
-                GRVToken coin = GRVToken(token);
-                coin.mint(owner, releaseBlock[indexOfBlock]);    
-            }
-        }
-    }*/
 
 }
