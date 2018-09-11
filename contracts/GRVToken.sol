@@ -13,7 +13,7 @@ contract GRVToken is MintableToken{
    
     string public constant name = "Gravel Token";
     string public constant symbol = "GRV";
-    uint8  public constant decimals = 1;
+    uint8  public constant decimals = 0;
     
     bool limitedTransfer = true;
     // mapping of the hold 
