@@ -27,28 +27,26 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
      */
     enum State { Unknown, Preparing, Active, Paused, ICO, ContinueSale, Refunding }
 
-    // FIXME: get value from the token.
-    uint256 public constant multiplier = 10 ** 1;
-
     // wallets address 
     address public walletTeam;
     address public walletAdvisor;
+    address public walletAirdrop;
 
     // Crowdsale opening time
     uint256 public openingTime;
     // FIXME: change times
-    uint256 public constant timeHoldTeam = 183 days;
+    uint256 public constant timeHoldTeam    = 183 days;
     uint256 public constant timeHoldAdvisor = 365 days;
 
     // FIXME: change values of the team and advisor.
-    uint256 public constant TOKEN_OF_THE_TEAM = 12500000;
-    uint256 public constant TOKEN_OF_THE_ADVISOR = 6666667;
-    uint256 public constant TOKEN_OF_THE_AIRDROP = 1666667;
-    uint256 public constant TOKEN_OF_THE_SALE = 62500000;
+    uint256 public constant TOKEN_OF_THE_TEAM       = 12500000;
+    uint256 public constant TOKEN_OF_THE_ADVISOR    = 6666667;
+    uint256 public constant TOKEN_OF_THE_AIRDROP    = 1666667;
+    uint256 public constant TOKEN_OF_THE_SALE       = 62500000;
     // Initial token supply...
     uint256 public constant INITIAL_SUPPLY = TOKEN_OF_THE_TEAM + TOKEN_OF_THE_ADVISOR + TOKEN_OF_THE_AIRDROP;
     // initial totalSupply planned ...
-    uint256 public totalInitialSupply = TOKEN_OF_THE_AIRDROP + TOKEN_OF_THE_TEAM + TOKEN_OF_THE_ADVISOR + TOKEN_OF_THE_AIRDROP + TOKEN_OF_THE_SALE;
+    uint256 public totalInitialSupply = INITIAL_SUPPLY + TOKEN_OF_THE_SALE;
 
     // How much ETH each address has invested to this crowdsale
     mapping (address => uint256) public investedAmountOf;
@@ -57,15 +55,16 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     // How many distinct addresses have invested 
     uint256 public investorCount = 0;
     // state of crowdsale
-    State state = State.Unknown;
+    State public state = State.Unknown;
     
     /**
      * Construct of GRVCrowdsale.
      * @param _rate Number of token units a buyer gets per wei
      * @param _wallet Address where collected funds will be forwarded to
      * @param _token Address of the token being sold
-     * @param _walletTeam wallet of the team 
+     * @param _walletTeam wallet of the team
      * @param _walletAdvisor wallet of the advisor
+     * @param _walletAirdrop wallet of the Airdrop
      * @param _openingTime Crowdsale opening time
      */
     constructor (uint256 _rate, 
@@ -73,13 +72,15 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
                  GRVToken _token,
                  address _walletTeam,
                  address _walletAdvisor,
+                 address _walletAirdrop,
                  uint256 _oneTokenInWei,
                  uint256 _openingTime)
       public  
       Crowdsale(_rate, _wallet, _token)              
-      IncreasingPriceCrowdsale(_oneTokenInWei, multiplier) {
+      IncreasingPriceCrowdsale(_oneTokenInWei) {
         walletTeam = _walletTeam;
         walletAdvisor = _walletAdvisor;        
+        walletAirdrop = _walletAirdrop;
         openingTime = _openingTime;        
     }
 
@@ -152,6 +153,8 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     {
         // Update investor
         investedAmountOf[_beneficiary].add(_weiAmount);
+        // call super class.
+        super._updatePurchasingState(_beneficiary, _weiAmount);
     } 
 
    /**
@@ -182,17 +185,13 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
         state = State.Preparing;
         // rules of hold team and advisor
         GRVToken coin = GRVToken(token);
-        
-        //coin.mint(owner, INITIAL_SUPPLY);
 
         // mint GRV of the team
         coin.mint(walletTeam, TOKEN_OF_THE_TEAM);
         // mint GRV of the advisor
         coin.mint(walletAdvisor, TOKEN_OF_THE_ADVISOR);
-
-        // FIXME: Add aridrop wallet...
         // mint GRV of the AIRDROP
-        //coin.mint(walletAirdrop, TOKEN_OF_THE_AIRDROP);
+        coin.mint(walletAirdrop, TOKEN_OF_THE_AIRDROP);
 
         // hold team
         uint256 closeTimeTeam = openingTime;
@@ -206,27 +205,6 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
         return true;
     }
 
-    /// STATE MACHINE
-    /**
-     * Crowdfund state machine management.
-     *
-     * We make it a function and do not assign the result to a variable, so there is no chance of the variable being stale.
-     */
-     // FIXME: change implementation, it's wrong.
-    function getState() public view returns (State) {
-        //if (paused) return State.Paused;
-        /*if (isMaximumGoalReached()) return State.Success;
-        else if (address(finalizeAgent) == 0) return State.Preparing;
-        else if (block.timestamp < startTimePreICO) return State.Preparing;
-        else if (block.timestamp > startTimePreICO && block.timestamp <= closeTimePreICO) return State.PreFunding;
-        else if (block.timestamp > startTimeICO && block.timestamp <= closeTimeICO && !isCrowdsaleFull()) return State.Funding;
-        else if (isMinimumGoalReached()) return State.Success;
-        else if (!isMinimumGoalReached() && weiRaised > 0 && loadedRefund >= weiRaised) return State.Refunding;
-        else return State.Failure;*/
-        //else return State.Unknown;
-        return state;
-    }
-    
     /**
      * @dev Release new coin of the crowdsale.
      * @param _tokenAmount amount of the coin

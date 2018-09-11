@@ -16,31 +16,28 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
     
     // FIXME: Update max blocks from the withepaper.
     /* MAX BLOCKS OF THE CROWDSALE */
-    uint256 public constant MAX_BLOCKS_CROWDSALE = 5;
+    uint256 public constant MAX_BLOCKS_CROWDSALE = 3;
 
     /* the number of tokens already sold through this contract*/
     uint256 public tokensSold = 0;
     
     /* How many weis one token costs */
     uint256 public oneTokenInWei;
-
-    uint256 public multiplier;
     
     /* manager release blocks... */
-    mapping (uint256 => uint256) public releaseBlock;
-    uint256 indexOfBlock = 0;
+    // initialize blocks of the Crowdsale
+    // 20833334 inital supply
+    uint256[] public blocks = [20836667,20843333,20846666];
+    uint256   public currentBlock = 0;
 
     /**
      * @dev Constructor, takes intial and final rates of tokens received per wei contributed.
      * @param _oneTokenInWei value of one tokens 
-     * @param _multiplier to be define
      * 
      */
-    constructor(uint256 _oneTokenInWei, uint256 _multiplier) public {                
+    constructor(uint256 _oneTokenInWei) public {                
         require(_oneTokenInWei > 0);
-        require(_multiplier > 0);
         oneTokenInWei = _oneTokenInWei;
-        multiplier = _multiplier;
     }
 
     /**
@@ -74,7 +71,20 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
         internal view returns (uint256)
     {        
         uint256 currentRate = getCurrentRate();
-        return _weiAmount.mul(multiplier).div(currentRate);
+        
+        // rule of block distribution
+        uint256 tokenAmount = _weiAmount.div(currentRate);
+        uint256 tokenLeft = getTokenLeft();
+        // test token of the block
+        require(tokenAmount <= tokenLeft, 'Token left insuficient.');
+        
+        return tokenAmount;
+    }
+    
+    function getTokenLeft() public view returns(uint256){
+        uint256 tokenReserved = blocks[currentBlock];
+        uint256 tokenLeft = tokenReserved.sub(token.totalSupply());
+        return tokenLeft;
     }
     
     /* Check for sane ether to token price */
@@ -111,5 +121,26 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
         // update token sold
         tokensSold = tokensSold.add(_tokenAmount);
     }   
+    
+    /**
+     * @dev Override for extensions that require an internal state to check for validity (current user contributions, etc.)
+     * @param _beneficiary Address receiving the tokens
+     * @param _weiAmount Value in wei involved in the purchase
+     *
+     * //override Crowdsale._updatePurchasingState
+     * 
+     */
+    function _updatePurchasingState(
+        address _beneficiary,
+        uint256 _weiAmount
+    )
+      internal 
+    {
+        // if max blocks not target increment currnetBlock
+        // if tokenLeft of the currnet block = 0 increment currnetBlock
+        if (currentBlock < MAX_BLOCKS_CROWDSALE && token.totalSupply() == blocks[currentBlock]){
+            currentBlock = currentBlock.add(1);
+        }
+    } 
 
 }

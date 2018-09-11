@@ -6,9 +6,11 @@ module.exports = function(deployer, network, accounts) {
     const owner = accounts[0];
     const walletTeam = accounts[1];
     const walletAdvisor = accounts[2];
+    const walletAirdrop = accounts[3];
     const openingTime = web3.eth.getBlock('latest').timestamp;
     //const rate = new BigNumber(1);    
     const rate = new web3.BigNumber(web3.toWei(0.0005, 'ether'));
+    // FIXME: update currente value
     const oneTokenInWei = new web3.BigNumber(web3.toWei(0.0005, 'ether'));
 
     console.log("owner.address " + owner);
@@ -31,6 +33,7 @@ module.exports = function(deployer, network, accounts) {
                 GRVToken.address,
                 walletTeam,
                 walletAdvisor,
+                walletAirdrop,
                 oneTokenInWei,
                 openingTime
             );
