@@ -9,12 +9,14 @@ module.exports = function(deployer, network, accounts) {
     const openingTime = web3.eth.getBlock('latest').timestamp;
     //const rate = new BigNumber(1);    
     const rate = new web3.BigNumber(web3.toWei(0.0005, 'ether'));
+    const oneTokenInWei = new web3.BigNumber(web3.toWei(0.0005, 'ether'));
 
     console.log("owner.address " + owner);
     console.log("walletTeam.address " + walletTeam);
     console.log("walletAdvisor.address " + walletAdvisor);
     console.log("openingTime " + openingTime);
     console.log("rate " + rate);
+    console.log("oneTokenInWei " + oneTokenInWei);
     //console.log("owner.address " + this.owner);
 
     return deployer
@@ -29,6 +31,7 @@ module.exports = function(deployer, network, accounts) {
                 GRVToken.address,
                 walletTeam,
                 walletAdvisor,
+                oneTokenInWei,
                 openingTime
             );
         }).then(() => {

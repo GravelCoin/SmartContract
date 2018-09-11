@@ -30,9 +30,6 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     // FIXME: get value from the token.
     uint256 public constant multiplier = 10 ** 1;
 
-    // FIXME: update value from the price table
-    uint256 public constant oneTokenInWei = (10000 * multiplier); // hardcoded 1 token = 0.0001 ethers
-
     // wallets address 
     address public walletTeam;
     address public walletAdvisor;
@@ -49,7 +46,7 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     uint256 public constant TOKEN_OF_THE_AIRDROP = 1666667;
     uint256 public constant TOKEN_OF_THE_SALE = 62500000;
     // Initial token supply...
-    uint256 public constant INITIAL_SUPPLY = 2500000;
+    uint256 public constant INITIAL_SUPPLY = TOKEN_OF_THE_TEAM + TOKEN_OF_THE_ADVISOR + TOKEN_OF_THE_AIRDROP;
     // initial totalSupply planned ...
     uint256 public totalInitialSupply = TOKEN_OF_THE_AIRDROP + TOKEN_OF_THE_TEAM + TOKEN_OF_THE_ADVISOR + TOKEN_OF_THE_AIRDROP + TOKEN_OF_THE_SALE;
 
@@ -76,10 +73,11 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
                  GRVToken _token,
                  address _walletTeam,
                  address _walletAdvisor,
+                 uint256 _oneTokenInWei,
                  uint256 _openingTime)
       public  
       Crowdsale(_rate, _wallet, _token)              
-      IncreasingPriceCrowdsale(oneTokenInWei, multiplier) {
+      IncreasingPriceCrowdsale(_oneTokenInWei, multiplier) {
         walletTeam = _walletTeam;
         walletAdvisor = _walletAdvisor;        
         openingTime = _openingTime;        
