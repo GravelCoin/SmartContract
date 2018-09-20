@@ -35,14 +35,14 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     // Crowdsale opening time
     uint256 public openingTime;
     // FIXME: change times
-    uint256 public constant timeHoldTeam    = 183 days;
-    uint256 public constant timeHoldAdvisor = 365 days;
+    uint256 public constant timeHoldTeam    = 2 days;//183 days;
+    uint256 public constant timeHoldAdvisor = 1 days;//365 days;
 
     // FIXME: change values of the team and advisor.
     uint256 public constant TOKEN_OF_THE_TEAM       = 12500000;
     uint256 public constant TOKEN_OF_THE_ADVISOR    = 6666667;
     uint256 public constant TOKEN_OF_THE_AIRDROP    = 1666667;
-    uint256 public constant TOKEN_OF_THE_SALE       = 62500000;
+    uint256 public constant TOKEN_OF_THE_SALE       = 20833386;//62500000;
     // Initial token supply...
     uint256 public constant INITIAL_SUPPLY = TOKEN_OF_THE_TEAM + TOKEN_OF_THE_ADVISOR + TOKEN_OF_THE_AIRDROP;
     // initial totalSupply planned ...
@@ -66,6 +66,8 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
      * @param _walletAdvisor wallet of the advisor
      * @param _walletAirdrop wallet of the Airdrop
      * @param _openingTime Crowdsale opening time
+     * @param _blocks blocks of the token to Crowdsale
+     * @param _blocks percent price of the _oneTokenInWei per block
      */
     constructor (uint256 _rate, 
                  address _wallet, 
@@ -74,10 +76,13 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
                  address _walletAdvisor,
                  address _walletAirdrop,
                  uint256 _oneTokenInWei,
-                 uint256 _openingTime)
+                 uint256 _openingTime, 
+                 uint256[] _blocks,
+                 uint256[] _blocksPrice
+                 )
       public  
       Crowdsale(_rate, _wallet, _token)              
-      IncreasingPriceCrowdsale(_oneTokenInWei) {
+      IncreasingPriceCrowdsale(_oneTokenInWei, _blocks, _blocksPrice) {
         walletTeam = _walletTeam;
         walletAdvisor = _walletAdvisor;        
         walletAirdrop = _walletAirdrop;
@@ -87,7 +92,7 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     //====================================================================================================//
     //                                               Events 
     //====================================================================================================//
-       
+
 
 
     //====================================================================================================//
@@ -118,7 +123,7 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
      * @param _tokenAmount Number of tokens to be purchased
      * 
      * //override Crowdsale._processPurchase
-     * //modify whenNotPaused
+     * //modify whenNotPaused - rule of the Paused smart contract
      */
     function _processPurchase(
         address _beneficiary,
@@ -133,7 +138,7 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
             investorCount++;
         }
 
-        // Update investor        
+        // Update tokenAmount        
         tokenAmountOf[_beneficiary].add(_tokenAmount);            
     }   
 
@@ -168,8 +173,9 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     )
         internal
     {        
-        // if all tokens not minted yet, minted token
-        if (token.totalSupply() < totalInitialSupply){
+        // if all tokens not minted yet OR balance less , minted token
+        uint256 balanceTokenWalletCrowdSale = token.balanceOf(wallet);
+        if ((token.totalSupply() < totalInitialSupply) || (balanceTokenWalletCrowdSale < _tokenAmount) ){
             require(GRVToken(token).mint(_beneficiary, _tokenAmount));
         } else {
             // if all tokens minted, transfer token minted and refound...
@@ -181,28 +187,38 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     //                                   manegemant crowdsale Contract Functions
     //====================================================================================================//
 
+    /**
+     * @dev initialize crowdsale 
+     * 
+     * 
+     */
     function preAllocate() public onlyOwner returns (bool){
-        state = State.Preparing;
-        // rules of hold team and advisor
-        GRVToken coin = GRVToken(token);
-
-        // mint GRV of the team
-        coin.mint(walletTeam, TOKEN_OF_THE_TEAM);
-        // mint GRV of the advisor
-        coin.mint(walletAdvisor, TOKEN_OF_THE_ADVISOR);
-        // mint GRV of the AIRDROP
-        coin.mint(walletAirdrop, TOKEN_OF_THE_AIRDROP);
-
-        // hold team
-        uint256 closeTimeTeam = openingTime;
-        closeTimeTeam = closeTimeTeam.add(timeHoldTeam);
-        coin.addLimitedTransfer(walletTeam, closeTimeTeam);
-        // hold advisor
-        uint256 closeTimeAdvisor = openingTime;
-        closeTimeAdvisor = closeTimeAdvisor.add(timeHoldAdvisor);
-        coin.addLimitedTransfer(walletAdvisor, closeTimeAdvisor);
-        state = State.Active;
-        return true;
+        if (state == State.Unknown){
+            state = State.Preparing;
+            // rules of hold team and advisor
+            GRVToken coin = GRVToken(token);
+    
+            // mint GRV of the team
+            coin.mint(walletTeam, TOKEN_OF_THE_TEAM);
+            // mint GRV of the advisor
+            coin.mint(walletAdvisor, TOKEN_OF_THE_ADVISOR);
+            // mint GRV of the AIRDROP
+            coin.mint(walletAirdrop, TOKEN_OF_THE_AIRDROP);
+    
+            // hold team
+            uint256 closeTimeTeam = openingTime;
+            closeTimeTeam = closeTimeTeam.add(timeHoldTeam);
+            coin.addLimitedTransfer(walletTeam, TOKEN_OF_THE_TEAM, closeTimeTeam);
+            // hold advisor
+            uint256 closeTimeAdvisor = openingTime;
+            closeTimeAdvisor = closeTimeAdvisor.add(timeHoldAdvisor);
+            coin.addLimitedTransfer(walletAdvisor, TOKEN_OF_THE_ADVISOR, closeTimeAdvisor);
+            state = State.Active;
+            return true;
+        } else{
+            return false;
+        }
+        
     }
 
     /**
@@ -213,7 +229,17 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     function mintToken(uint256 _tokenAmount) external onlyOwner {
         require(_tokenAmount > 0);
         GRVToken coin = GRVToken(token);
-        coin.mint(owner, _tokenAmount);
+        coin.mint(wallet, _tokenAmount);
+    }
+    
+    /**
+     * @dev Manager GRGRVToken Hold rule (limited Transfer)
+     * @param _limitedTransfer Bool value of limited control enable or disable
+     * 
+     */
+    function updateLimited(bool _limitedTransfer) public onlyOwner returns(bool) {
+        GRVToken coin = GRVToken(token);
+        return coin.updateLimited(_limitedTransfer);
     }
 
 }

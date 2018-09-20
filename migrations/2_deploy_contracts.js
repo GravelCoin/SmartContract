@@ -1,5 +1,6 @@
 const GRVCrowdsale = artifacts.require('../GRVCrowdsale.sol');
 const GRVToken = artifacts.require('./GRVToken.sol');
+const GRVPayment = artifacts.require('./GRVPayment.sol');
 const BigNumber = web3.BigNumber;
 
 module.exports = function(deployer, network, accounts) {
@@ -12,7 +13,12 @@ module.exports = function(deployer, network, accounts) {
     const rate = new web3.BigNumber(web3.toWei(0.0005, 'ether'));
     // FIXME: update currente value
     const oneTokenInWei = new web3.BigNumber(web3.toWei(0.0005, 'ether'));
-
+    //[20836667,20843333,20846666]
+    // FIXME: update values block
+    const blocks = [20833354,20833365,20833386];
+    // FIXME: add new array to price of the blockIndex
+    const blocksPrice = [50, 60, 70];
+    
     console.log("owner.address " + owner);
     console.log("walletTeam.address " + walletTeam);
     console.log("walletAdvisor.address " + walletAdvisor);
@@ -35,7 +41,9 @@ module.exports = function(deployer, network, accounts) {
                 walletAdvisor,
                 walletAirdrop,
                 oneTokenInWei,
-                openingTime
+                openingTime,
+                blocks,
+                blocksPrice
             );
         }).then(() => {
 
@@ -47,5 +55,13 @@ module.exports = function(deployer, network, accounts) {
             crowdsale.preAllocate();
 
         })
+        /*.then(()=>{
+            return deployer.deploy(GRVPayment);
+        })
+        .then(()=>{
+            var token = GRVToken.at(GRVToken.address);
+            var payment = GRVPayment.at(GRVPayment.address);
+            payment._setInterfaceContractAddress(token.address);
+        })*/
         ;
 };

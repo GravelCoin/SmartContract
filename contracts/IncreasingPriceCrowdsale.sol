@@ -26,8 +26,8 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
     
     /* manager release blocks... */
     // initialize blocks of the Crowdsale
-    // 20833334 inital supply
-    uint256[] public blocks = [20836667,20843333,20846666];
+    uint256[] public blocks;
+    uint256[] public blocksPrice;
     uint256   public currentBlock = 0;
 
     /**
@@ -35,10 +35,18 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
      * @param _oneTokenInWei value of one tokens 
      * 
      */
-    constructor(uint256 _oneTokenInWei) public {                
+    constructor(uint256 _oneTokenInWei, uint256[] _blocks, uint256[] _blocksPrice) public {                
         require(_oneTokenInWei > 0);
         oneTokenInWei = _oneTokenInWei;
+        blocks = _blocks;
+        blocksPrice = _blocksPrice;
     }
+    
+    //====================================================================================================//
+    //                                               Events 
+    //====================================================================================================//
+    event UpdateTokenPrice(uint256 _tokenPriceInWei);
+
 
     /**
      * @dev Returns the rate of tokens per eth at the present tokenSold.
@@ -47,17 +55,13 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
      *
      * /override Crowdsale.getCurrentRate
      */
-     // TODO: rever tabela de preços atualizada
     function getCurrentRate() public view returns (uint256) { 
-        uint256 _totalSupply = token.totalSupply();       
-        // price of U$ 0.04 - 40% of the oneToken
-        if (_totalSupply <= 15000000) {return oneTokenInWei.mul(40).div(100);}
-        // price of U$ 0.06 - 60% of the oneToken
-        if (_totalSupply <= 30000000) {return oneTokenInWei.mul(60).div(100);}
-        // price of U$ 0.08 - 80% of the oneToken
-        if (_totalSupply <= 80000000) {return oneTokenInWei.mul(80).div(100);}
-        // price of U$ 0.10 - 100% of the oneToken
-        if (_totalSupply <= 130000000){return oneTokenInWei;}                
+        if (currentBlock < MAX_BLOCKS_CROWDSALE){
+            uint256 txPrice = blocksPrice[currentBlock];
+            return oneTokenInWei.mul(txPrice).div(100);
+        } else {
+            return oneTokenInWei;
+        }
     }
 
     /**
@@ -100,6 +104,7 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
      */
     function updateTokenPrice(uint256 _oneTokenInWei) isTokenPriceSane(_oneTokenInWei) onlyOwner external {
         oneTokenInWei = _oneTokenInWei;
+        emit UpdateTokenPrice(_oneTokenInWei);
     }
 
     /**
