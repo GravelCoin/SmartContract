@@ -4,6 +4,7 @@ const inital_value = 2500000;
 let HST;
 
 contract('GRVToken', (accounts) => {
+  
   beforeEach(async () => {
     HST = await EIP20Abstraction.new({ from: accounts[0] });
   });

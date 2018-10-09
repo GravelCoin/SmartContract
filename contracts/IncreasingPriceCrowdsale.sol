@@ -80,7 +80,7 @@ contract IncreasingPriceCrowdsale is Crowdsale, Ownable {
         uint256 tokenAmount = _weiAmount.div(currentRate);
         uint256 tokenLeft = getTokenLeft();
         // test token of the block
-        require(tokenAmount <= tokenLeft, 'Token left insuficient.');
+        require(tokenAmount <= tokenLeft, "Token left insuficient.");
         
         return tokenAmount;
     }

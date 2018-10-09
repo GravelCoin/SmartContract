@@ -12,7 +12,7 @@ contract GRVToken is MintableToken{
     using SafeMath for uint256;
    
     string public constant name = "Gravel Token";
-    string public constant symbol = "GRV";
+    string public constant symbol = "GRVC";
     uint8  public constant decimals = 0;
     
     bool limitedTransfer = true;
@@ -53,8 +53,8 @@ contract GRVToken is MintableToken{
     }
 
     function addLimitedTransfer(address _walletHold, uint256 _value, uint256 _timeBlock) public onlyOwner returns (bool) {
-        require(_value > 0 , 'Value not be zero(0).');
-        require(_timeBlock > now, 'Time block not be now.');
+        require(_value > 0, "Value not be zero(0).");
+        require(_timeBlock > now, "Time block not be now.");
         limitedWalletOfTransferByTimeMap[_walletHold] = [_value, _timeBlock];
         emit LimitedTransfer(_walletHold, _value, _timeBlock);
         return true;
@@ -78,19 +78,19 @@ contract GRVToken is MintableToken{
         public
         returns (bool)
     {
-        require(canTransfer(_from, _value), 'Hold value');
+        require(canTransfer(_from, _value), "Hold value");
         return super.transferFrom(_from, _to, _value);
     } 
     
     /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  * // Override BasicToken.transfer
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(canTransfer(msg.sender, _value), 'Hold value');
-    return super.transfer(_to, _value);
-  }
+      * @dev transfer token for a specified address
+      * @param _to The address to transfer to.
+      * @param _value The amount to be transferred.
+      * // Override BasicToken.transfer
+      */
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(canTransfer(msg.sender, _value), "Hold value");
+        return super.transfer(_to, _value);
+    }
 
 }

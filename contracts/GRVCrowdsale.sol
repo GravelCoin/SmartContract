@@ -227,7 +227,8 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
      *
      */
     function mintToken(uint256 _tokenAmount) external onlyOwner {
-        require(_tokenAmount > 0);
+        require(_tokenAmount > 0, "tokenAmount less than zero.");
+        require(currentBlock >= MAX_BLOCKS_CROWDSALE, "GRVC in release  block state");
         GRVToken coin = GRVToken(token);
         coin.mint(wallet, _tokenAmount);
     }

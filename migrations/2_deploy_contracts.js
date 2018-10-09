@@ -1,6 +1,6 @@
 const GRVCrowdsale = artifacts.require('../GRVCrowdsale.sol');
 const GRVToken = artifacts.require('./GRVToken.sol');
-const GRVPayment = artifacts.require('./GRVPayment.sol');
+//const GRVPayment = artifacts.require('./GRVPayment.sol');
 const BigNumber = web3.BigNumber;
 
 module.exports = function(deployer, network, accounts) {
