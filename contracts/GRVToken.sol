@@ -17,7 +17,14 @@ contract GRVToken is MintableToken{
     
     bool limitedTransfer = true;
     // mapping of the hold 
-    mapping (address => uint256[]) public limitedWalletOfTransferByTimeMap;
+    struct LockData {
+        uint256 value;
+        bool hasValue;
+        uint256 time;
+    }
+    mapping (address => LockData) public limitedWalletOfTransferByTimeMap;
+
+    
 
     // =========================================================================================== //
     //                                    Events
@@ -32,14 +39,18 @@ contract GRVToken is MintableToken{
      * @dev Checks whether it can transfer or otherwise throws.
      */
     function canTransfer(address _sender, uint256 _value) public view returns(bool) {
-        if (limitedTransfer){            
-            if (limitedWalletOfTransferByTimeMap[_sender][0] > 0){       
-                bool isBlocked = limitedWalletOfTransferByTimeMap[_sender][1] <= uint64(now);
-                bool hasTokenLeft = uint256(balanceOf(_sender)).sub(_value) < 0;
-                return !(isBlocked && hasTokenLeft);
-            }
-        } 
-        return true;
+      //  if (limitedTransfer){     
+                 
+            /*if (limitedWalletOfTransferByTimeMap[_sender].hasValue){                   
+                bool isFreeBlock = limitedWalletOfTransferByTimeMap[_sender].time <= now;
+                bool hasTokenLeft = uint256(balanceOf(_sender)).sub(_value) >= 0;
+                //return (isFreeBlock && hasTokenLeft);                       
+                return false;
+            } */            
+        //} 
+        //return true;
+        return limitedWalletOfTransferByTimeMap[_sender].hasValue;
+        //return limitedWalletOfTransferByTimeMap[_sender].hasValue;  
     }
 
     function updateLimited(bool _limitedTransfer) public onlyOwner returns(bool) {
@@ -54,10 +65,16 @@ contract GRVToken is MintableToken{
 
     function addLimitedTransfer(address _walletHold, uint256 _value, uint256 _timeBlock) public onlyOwner returns (bool) {
         require(_value > 0, "Value not be zero(0).");
-        require(_timeBlock > now, "Time block not be now.");
-        limitedWalletOfTransferByTimeMap[_walletHold] = [_value, _timeBlock];
+        require(_timeBlock > block.timestamp, "Time block not be now.");
+        var t = limitedWalletOfTransferByTimeMap[_walletHold];
+        t.hasValue = true;
+        t.time = _timeBlock;
+        t.value = _value;
+    //    limitedWalletOfTransferByTimeMap[_walletHold].hasValue = true;
+    //    limitedWalletOfTransferByTimeMap[_walletHold].time = _timeBlock;
+    //    limitedWalletOfTransferByTimeMap[_walletHold].value = _value;        
         emit LimitedTransfer(_walletHold, _value, _timeBlock);
-        return true;
+        return limitedWalletOfTransferByTimeMap[_walletHold].hasValue;
     }
 
     // =============================================================================================== //
