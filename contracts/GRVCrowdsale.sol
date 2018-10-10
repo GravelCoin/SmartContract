@@ -35,8 +35,8 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     // Crowdsale opening time
     uint256 public openingTime;
     // FIXME: change times
-    uint256 public constant timeHoldTeam    = 2 days;//183 days;
-    uint256 public constant timeHoldAdvisor = 1 days;//365 days;
+    uint256 public timeHoldTeam    = 2 days;//183 days;
+    uint256 public timeHoldAdvisor = 1 days;//365 days;
 
     // FIXME: change values of the team and advisor.
     uint256 public constant TOKEN_OF_THE_TEAM       = 12500000;
@@ -87,12 +87,14 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
         walletAdvisor = _walletAdvisor;        
         walletAirdrop = _walletAirdrop;
         openingTime = _openingTime;        
+        timeHoldTeam = timeHoldTeam.add(openingTime);
+        timeHoldAdvisor = timeHoldAdvisor.add(openingTime);
     }
 
     //====================================================================================================//
     //                                               Events 
     //====================================================================================================//
-
+    event WithdrewGRVC(address to, uint256 amount);
 
 
     //====================================================================================================//
@@ -196,23 +198,13 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
         if (state == State.Unknown){
             state = State.Preparing;
             // rules of hold team and advisor
-            GRVToken coin = GRVToken(token);
-    
+            GRVToken coin = GRVToken(token);    
             // mint GRV of the team
-            coin.mint(walletTeam, TOKEN_OF_THE_TEAM);
+            coin.mint(wallet, TOKEN_OF_THE_TEAM);
             // mint GRV of the advisor
-            coin.mint(walletAdvisor, TOKEN_OF_THE_ADVISOR);
+            coin.mint(wallet, TOKEN_OF_THE_ADVISOR);
             // mint GRV of the AIRDROP
-            coin.mint(walletAirdrop, TOKEN_OF_THE_AIRDROP);
-    
-            // hold team
-            uint256 closeTimeTeam = openingTime;
-            closeTimeTeam = closeTimeTeam.add(timeHoldTeam);
-            coin.addLimitedTransfer(walletTeam, TOKEN_OF_THE_TEAM, closeTimeTeam);
-            // hold advisor
-            uint256 closeTimeAdvisor = openingTime;
-            closeTimeAdvisor = closeTimeAdvisor.add(timeHoldAdvisor);
-            coin.addLimitedTransfer(walletAdvisor, TOKEN_OF_THE_ADVISOR, closeTimeAdvisor);
+            coin.mint(walletAirdrop, TOKEN_OF_THE_AIRDROP);                
             state = State.Active;
             return true;
         } else{
@@ -232,15 +224,26 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
         GRVToken coin = GRVToken(token);
         coin.mint(wallet, _tokenAmount);
     }
-    
-    /**
-     * @dev Manager GRGRVToken Hold rule (limited Transfer)
-     * @param _limitedTransfer Bool value of limited control enable or disable
-     * 
-     */
-    function updateLimited(bool _limitedTransfer) public onlyOwner returns(bool) {
-        GRVToken coin = GRVToken(token);
-        return coin.updateLimited(_limitedTransfer);
+
+    function withdraw(address _to, uint256 _value) private onlyOwner {
+        require(now >= timeHoldAdvisor, "Withdraw team is lock");
+        GRVToken token = GRVToken(token);        
+        uint256 tokenBalance = token.balanceOf(this);
+        require(tokenBalance > _value,"Insufficient funds");
+        token.transfer(_to, _value);
+        emit WithdrewGRVC(msg.sender, _value);
+    }
+
+
+    // callable by owner only, after specified time, only for Tokens implementing ERC20
+    function withdrawAdvisor() onlyOwner public {
+        require(now >= timeHoldAdvisor, "Withdraw advisor is lock");
+        withdraw(walletAdvisor, TOKEN_OF_THE_ADVISOR);       
+    }
+
+    function withdrawTeam() onlyOwner public {
+        require(now >= timeHoldAdvisor, "Withdraw team is lock");
+        withdraw(walletTeam, TOKEN_OF_THE_TEAM);
     }
 
 }
