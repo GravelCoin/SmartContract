@@ -224,7 +224,12 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
         GRVToken coin = GRVToken(token);
         coin.mint(wallet, _tokenAmount);
     }
-
+    /**
+     * @dev transfer token for a specified address
+     * @param _to The address to transfer to.
+     * @param _value The amount to be transferred.
+     *
+     */
     function withdraw(address _to, uint256 _value) private onlyOwner {
         require(now >= timeHoldAdvisor, "Withdraw team is lock");
         GRVToken token = GRVToken(token);        
@@ -235,14 +240,21 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     }
 
 
-    // callable by owner only, after specified time, only for Tokens implementing ERC20
+    /**
+     * @dev transfer token for a advisor address
+     *
+     */
     function withdrawAdvisor() onlyOwner public {
         require(now >= timeHoldAdvisor, "Withdraw advisor is lock");
         withdraw(walletAdvisor, TOKEN_OF_THE_ADVISOR);       
     }
 
+    /**
+     * @dev transfer token for a team address
+     *
+     */
     function withdrawTeam() onlyOwner public {
-        require(now >= timeHoldAdvisor, "Withdraw team is lock");
+        require(now >= timeHoldTeam, "Withdraw team is lock");
         withdraw(walletTeam, TOKEN_OF_THE_TEAM);
     }
 
