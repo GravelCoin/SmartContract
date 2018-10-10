@@ -20,12 +20,8 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
      * - Preparing: All contract initialization calls and variables have not been set yet     
      * - Active: Active crowdsale     
      * - Paused: Paused crowdsale functions
-     * - ICO: 
-     * - ContinueSale: 
-     * - Refunding: Refunds are loaded on the contract for reclaim.
-     * - SKAMB: 
      */
-    enum State { Unknown, Preparing, Active, Paused, ICO, ContinueSale, Refunding }
+    enum State { Unknown, Preparing, Active, Paused }
 
     // wallets address 
     address public walletTeam;
@@ -218,7 +214,7 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
      * @param _tokenAmount amount of the coin
      *
      */
-    function mintToken(uint256 _tokenAmount) external onlyOwner {
+    function mintToken(uint256 _tokenAmount) external onlyOwner whenNotPaused {
         require(_tokenAmount > 0, "tokenAmount less than zero.");
         require(currentBlock >= MAX_BLOCKS_CROWDSALE, "GRVC in release  block state");
         GRVToken coin = GRVToken(token);
@@ -230,7 +226,7 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
      * @param _value The amount to be transferred.
      *
      */
-    function withdraw(address _to, uint256 _value) private onlyOwner {
+    function withdraw(address _to, uint256 _value) private onlyOwner whenNotPaused {
         require(now >= timeHoldAdvisor, "Withdraw team is lock");
         GRVToken token = GRVToken(token);        
         uint256 tokenBalance = token.balanceOf(this);
@@ -244,7 +240,7 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
      * @dev transfer token for a advisor address
      *
      */
-    function withdrawAdvisor() onlyOwner public {
+    function withdrawAdvisor() public onlyOwner {
         require(now >= timeHoldAdvisor, "Withdraw advisor is lock");
         withdraw(walletAdvisor, TOKEN_OF_THE_ADVISOR);       
     }
@@ -253,9 +249,17 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
      * @dev transfer token for a team address
      *
      */
-    function withdrawTeam() onlyOwner public {
+    function withdrawTeam() public onlyOwner {
         require(now >= timeHoldTeam, "Withdraw team is lock");
         withdraw(walletTeam, TOKEN_OF_THE_TEAM);
+    }
+
+    /**
+      * @dev Allows the current owner to transfer control of the contract to a newOwner.
+      * @param _newOwner The address to transfer ownership to.
+      */
+    function transferOwnership(address newOwner) public onlyOwner {
+        GRVToken(token).transferOwnership(newOwner);
     }
 
 }
