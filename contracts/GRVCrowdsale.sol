@@ -196,11 +196,11 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
             // rules of hold team and advisor
             GRVToken coin = GRVToken(token);    
             // mint GRV of the team
-            coin.mint(wallet, TOKEN_OF_THE_TEAM);
+            coin.mint(owner, TOKEN_OF_THE_TEAM);
             // mint GRV of the advisor
-            coin.mint(wallet, TOKEN_OF_THE_ADVISOR);
+            coin.mint(owner, TOKEN_OF_THE_ADVISOR);
             // mint GRV of the AIRDROP
-            coin.mint(walletAirdrop, TOKEN_OF_THE_AIRDROP);                
+            coin.mint(owner, TOKEN_OF_THE_AIRDROP);                
             state = State.Active;
             return true;
         } else{
