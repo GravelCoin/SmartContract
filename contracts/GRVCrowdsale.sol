@@ -258,8 +258,8 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
       * @dev Allows the current owner to transfer control of the contract to a newOwner.
       * @param _newOwner The address to transfer ownership to.
       */
-    function transferOwnership(address newOwner) public onlyOwner {
-        GRVToken(token).transferOwnership(newOwner);
+    function transferOwnership(address _newOwner) public onlyOwner {
+        GRVToken(token).transferOwnership(_newOwner);
     }
 
 }
