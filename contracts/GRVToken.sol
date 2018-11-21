@@ -10,7 +10,7 @@ import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
 contract GRVToken is MintableToken{
     using SafeMath for uint256;
    
-    string public constant name = "Gravel Token";
+    string public constant name = "Gravel Coin";
     string public constant symbol = "GRVC";
     uint8  public constant decimals = 0;
 
