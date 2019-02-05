@@ -111,6 +111,7 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     )
     internal whenNotPaused
     {
+        require(_weiAmount > 0, "negative number");
         super._preValidatePurchase(_beneficiary, _weiAmount);
     }
 
@@ -216,7 +217,7 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
      */
     function mintToken(uint256 _tokenAmount) external onlyOwner whenNotPaused {
         require(_tokenAmount > 0, "tokenAmount less than zero.");
-        require(currentBlock >= MAX_BLOCKS_CROWDSALE, "GRVC in release  block state");
+        require(currentBlock >= MAX_BLOCKS_CROWDSALE, "GRVC in release block state");
         GRVToken coin = GRVToken(token);
         coin.mint(wallet, _tokenAmount);
     }

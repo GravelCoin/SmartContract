@@ -52,6 +52,8 @@ contract("GRVCrowdsale", accounts => {
         from: accounts[0]
       }
     );
+    // transfer ownership of the grvtoken
+    await grvtoken.transferOwnership.call(grvcrowdsale.address, {from: owner});
   });
 
   /**
@@ -397,6 +399,105 @@ contract("GRVCrowdsale", accounts => {
     it("Block 2", async () => {
       let value = await grvcrowdsale.blocks.call(2);
       assert.strictEqual(blocks[2], value.toNumber());
+    });
+
+    it("Continuous sale", async () => {
+      const purchaser = accounts[5];
+      let amountTokenSale = 0;
+      // verifica o owner
+      let newOwner = await grvtoken.owner.call();
+      assert.strictEqual(grvcrowdsale.address, newOwner, "TransferOwnership of the GRVToken fail");
+      // inicializa o contrato alocando os valores para o team, advisor, airdrop ...
+      let isInitialize = await grvcrowdsale.preAllocate.call( { from: owner });
+      assert.strictEqual(isInitialize, true);
+      // verifica o block corrente = 0
+      let currentBlock = await grvcrowdsale.currentBlock.call();
+      assert.strictEqual(currentBlock.toNumber(), 0, "Expected current block fail");
+
+      // identifica todos os tokens restantes do primeiro bloco
+      let tokenLeft = await grvcrowdsale.getTokenLeft.call();
+      let expectedTokenLeft = blocks[currentBlock.toNumber()] - INITIAL_SUPPLY;
+      assert.strictEqual(tokenLeft.toNumber(), expectedTokenLeft, "Expected token left fail");
+
+      // verifica o preco corrente
+      let currentRate = await grvcrowdsale.getCurrentRate.call();
+      let expectedCurrentRate = blocksPrice[currentBlock.toNumber()] * oneTokenInWei / 100;
+      assert.strictEqual(currentRate.toNumber(), expectedCurrentRate, "Expected current rate fail");
+
+      // verifica se a quantidade de token corresponde ao valor enviado .
+      let beforeSaleBalance = await grvtoken.balanceOf.call(purchaser);
+      const emptyValue = 0;
+      assert.strictEqual(beforeSaleBalance.toNumber(), emptyValue, "Before Sale Balance fail");
+      // investidor compra todos os GRVCs do bloco
+      await grvcrowdsale.sendTransaction({ value: expectedTokenLeft * expectedCurrentRate, from: purchaser });
+      amountTokenSale += expectedTokenLeft;
+      // verifica se a quantidade de token corresponde ao valor enviado .
+      let afterSaleBalance = await grvtoken.balanceOf.call(purchaser);      
+      assert.strictEqual(afterSaleBalance.toNumber(), amountTokenSale, "After Sale Balance fail");
+
+      // verifica se bloco corrente agora = 1
+      currentBlock = await grvcrowdsale.currentBlock.call();
+      assert.strictEqual(currentBlock.toNumber(), 1, "Expected current block fail");
+
+      // identifica todos os tokens restantes do segundo bloco
+      tokenLeft = await grvcrowdsale.getTokenLeft.call();
+      expectedTokenLeft = blocks[currentBlock.toNumber()] - blocks[currentBlock.toNumber() -1];
+      assert.strictEqual(tokenLeft.toNumber(), expectedTokenLeft, "Expected token left fail");
+
+      // verifica o preco corrente
+      currentRate = await grvcrowdsale.getCurrentRate.call();
+      expectedCurrentRate = blocksPrice[currentBlock.toNumber()] * oneTokenInWei / 100;
+      assert.strictEqual(currentRate.toNumber(), expectedCurrentRate, "Expected current rate fail");
+
+      // investidor compra todos os GRVCs do segundo bloco
+      await grvcrowdsale.sendTransaction({ value: expectedTokenLeft * expectedCurrentRate, from: purchaser });
+      amountTokenSale += expectedTokenLeft;
+
+      // verifica se a quantidade de token corresponde ao valor enviado .
+      afterSaleBalance = await grvtoken.balanceOf.call(purchaser);      
+      assert.strictEqual(afterSaleBalance.toNumber(), amountTokenSale, "After Sale Balance fail");
+
+
+      // verifica se bloco corrente agora = 2
+      currentBlock = await grvcrowdsale.currentBlock.call();
+      assert.strictEqual(currentBlock.toNumber(), 2, "Expected current block fail");
+
+      // identifica todos os tokens restantes do primeiro bloco
+      tokenLeft = await grvcrowdsale.getTokenLeft.call();
+      expectedTokenLeft = blocks[currentBlock.toNumber()] - INITIAL_SUPPLY;
+      assert.strictEqual(tokenLeft.toNumber(), expectedTokenLeft, "Expected token left fail");
+
+      // verifica o preco corrente
+      currentRate = await grvcrowdsale.getCurrentRate.call();
+      expectedCurrentRate = blocksPrice[currentBlock.toNumber()] * oneTokenInWei / 100;
+      assert.strictEqual(currentRate.toNumber(), expectedCurrentRate, "Expected current rate fail");
+
+      // investidor compra todos os GRVCs do bloco
+      await grvcrowdsale.sendTransaction({ value: expectedTokenLeft * expectedCurrentRate, from: purchaser });
+      amountTokenSale += expectedTokenLeft;
+      // verifica se a quantidade de token corresponde ao valor enviado .
+      afterSaleBalance = await grvtoken.balanceOf.call(purchaser);      
+      assert.strictEqual(afterSaleBalance.toNumber(), amountTokenSale, "After Sale Balance fail");
+   
+
+      // verifica se o bloco corrente agora = 3
+      currentBlock = await grvcrowdsale.currentBlock.call();
+      assert.strictEqual(currentBlock.toNumber(), 3, "Expected current block fail");
+
+      // verifica o preco corrente. Deve ser preço cheio pois não existem mais blocos (currentBlock == MAX_BLOCKS_CROWDSALE)
+      currentRate = await grvcrowdsale.getCurrentRate.call();
+      expectedCurrentRate = oneTokenInWei;
+      assert.strictEqual(currentRate.toNumber(), expectedCurrentRate, "Expected current rate fail");      
+
+      // investidor compra 1 eth em GRVC. O valor de cado GRVC deve ser cheio, sem deconto.
+      let valueFullPrice = 10;
+      let fullPrice = 0.0005;
+      await grvcrowdsale.sendTransaction({ value: web3.toWei(valueFullPrice, "ether"), from: purchaser });
+      amountTokenSale += (valueFullPrice / fullPrice ) /*2000*/;
+      // verifica se a quantidade de token corresponde ao valor enviado .
+      afterSaleBalance = await grvtoken.balanceOf.call(purchaser);      
+      assert.strictEqual(afterSaleBalance.toNumber(), amountTokenSale, "After Sale Balance fail");
+   
     });
   });
 });

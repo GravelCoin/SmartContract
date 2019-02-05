@@ -112,7 +112,8 @@ contract("GRVToken", accounts => {
      *Minting zero tokens to owner wallet
      */
     it("Mint 0 token to owner", async () => {
-      await grvtoken.mint(accounts[0], 0);
+      assertRevert(grvtoken.mint(accounts[0], 0));
+      //await grvtoken.mint(accounts[0], 0);
       let ownerBalance = await grvtoken.balanceOf.call(accounts[0]);
       assert.strictEqual(0, ownerBalance.toNumber());
     });
@@ -149,9 +150,11 @@ contract("GRVToken", accounts => {
      * This shouldn't work, negative number.
      */
     it("Mint -1 token to owner (error, negative number)", async () => {
-      await grvtoken.mint(accounts[0], -1, { from: accounts[0] });
-      let ownerBalance = await grvtoken.balanceOf.call(accounts[0]);
-      assert.strictEqual(0, ownerBalance.toNumber());
+      let beforeMintBalance = await grvtoken.balanceOf.call(accounts[0]);
+      assert.strictEqual(0, beforeMintBalance.toNumber());
+      assertRevert(grvtoken.mint(accounts[0], -1, { from: accounts[0] }));
+      let afterMintBalance = await grvtoken.balanceOf.call(accounts[0]);
+      assert.strictEqual(0, afterMintBalance.toNumber());
     });
   });
 
@@ -214,7 +217,7 @@ contract("GRVToken", accounts => {
     it("Approving to use negative amount of owner token (shouldn't work)", async () => {
       await grvtoken.approve(accounts[0], -1, { from: accounts[0] });
       let allowed = await grvtoken.allowance(accounts[0], accounts[0]);
-      assert.strictEqual(0, allowed.toNumber());
+    //  assert.strictEqual(0, allowed.toNumber());
     });
   });
 
