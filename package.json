@@ -20,7 +20,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "truffle test test/eip20/GRVToken.test.js",
+    "testc": "truffle test test/eip20/GRVCrowdsale.test.js"
   },
   "keywords": [],
   "author": "",
