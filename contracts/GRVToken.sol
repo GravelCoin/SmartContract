@@ -33,7 +33,8 @@ contract GRVToken is MintableToken{
         public
         returns (bool)
     {
-        require(_amount > 0, "tokenAmount less than zero.");
-        return super.mint(_to,_amount);      
+        // Casting to int, because unsigned int doesn't have negative numbers
+        require(int(_amount) > 0, "tokenAmount less than zero.");
+        return super.mint(_to,_amount);
     }
 }
