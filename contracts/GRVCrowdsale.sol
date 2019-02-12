@@ -137,8 +137,8 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
             investorCount++;
         }
 
-        // Update tokenAmount        
-        tokenAmountOf[_beneficiary].add(_tokenAmount);            
+        // Update tokenAmount      
+        tokenAmountOf[_beneficiary] = tokenAmountOf[_beneficiary].add(_tokenAmount);    
     }   
 
     /**
@@ -156,7 +156,7 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
       internal whenNotPaused
     {
         // Update investor
-        investedAmountOf[_beneficiary].add(_weiAmount);
+        investedAmountOf[_beneficiary] = investedAmountOf[_beneficiary].add(_weiAmount);
         // call super class.
         super._updatePurchasingState(_beneficiary, _weiAmount);
     } 
