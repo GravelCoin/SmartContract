@@ -338,13 +338,42 @@ contract("GRVCrowdsale", accounts => {
      * Verifying State after preAllocate
      */
     it("Verifying state", async () => {
-        // inicializa o contrato alocando os valores para o team, advisor, airdrop ...
-        let isInitialize = await grvcrowdsale.preAllocate.call({ from: owner });
-        assert.strictEqual(isInitialize, true, "Error, preAllocate not executed.");
+      // inicializa o contrato alocando os valores para o team, advisor, airdrop ...
+      let isInitialize = await grvcrowdsale.preAllocate.call({ from: owner });
+      assert.strictEqual(
+        isInitialize,
+        true,
+        "Error, preAllocate not executed."
+      );
 
-        // Getting state value, shoud be 2 {Active}
-        let state = await grvcrowdsale.state();
-        assert.strictEqual(state.toNumber(), 2, "Wrong state value after preAllocate.");
+      // Getting state value, shoud be 2 {Active}
+      let state = await grvcrowdsale.state();
+      assert.strictEqual(
+        state.toNumber(),
+        2,
+        "Wrong state value after preAllocate."
+      );
+    });
+
+    /**
+     * Verifying TotalSupply after preAllocate
+     */
+    it("Verifying totalSupply", async () => {
+      // inicializa o contrato alocando os valores para o team, advisor, airdrop ...
+      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
+      assert.strictEqual(
+        isInitialized,
+        true,
+        "Error, preAllocate not executed."
+      );
+
+      // Getting total supply value
+      let totalSupply = await grvtoken.totalSupply();
+      assert.strictEqual(
+        totalSupply.toNumber(),
+        INITIAL_SUPPLY + TOKEN_OF_THE_SALE,
+        "Wrong totalSupply value."
+      );
     });
   });
 
