@@ -333,6 +333,19 @@ contract("GRVCrowdsale", accounts => {
       let value = await grvcrowdsale.currentBlock.call();
       assert.strictEqual(0, value.toNumber());
     });
+
+    /**
+     * Verifying State after preAllocate
+     */
+    it("Verifying state", async () => {
+        // inicializa o contrato alocando os valores para o team, advisor, airdrop ...
+        let isInitialize = await grvcrowdsale.preAllocate.call({ from: owner });
+        assert.strictEqual(isInitialize, true, "Error, preAllocate not executed.");
+
+        // Getting state value, shoud be 2 {Active}
+        let state = await grvcrowdsale.state();
+        assert.strictEqual(state.toNumber(), 2, "Wrong state value after preAllocate.");
+    });
   });
 
   /**
