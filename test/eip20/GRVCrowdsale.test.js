@@ -95,7 +95,11 @@ contract("GRVCrowdsale", accounts => {
       // Transfering ownership
       await grvcrowdsale.renounceOwnership({ from: accounts[2] });
       actualOwner = await grvcrowdsale.owner();
-      assert.strictEqual(actualOwner, "0x0", "Wrong empty owner");
+      assert.strictEqual(
+        actualOwner,
+        "0x0000000000000000000000000000000000000000",
+        "Wrong empty owner"
+      );
     });
 
     /**
@@ -802,7 +806,7 @@ contract("GRVCrowdsale", accounts => {
         value: web3.toWei(valueFullPrice, "ether"),
         from: purchaser
       });
-      amountTokenSale += valueFullPrice / fullPrice //2000;
+      amountTokenSale += valueFullPrice / fullPrice; //2000;
       // verifica se a quantidade de token corresponde ao valor enviado .
       afterSaleBalance = await grvtoken.balanceOf.call(purchaser);
       assert.strictEqual(
@@ -1104,12 +1108,25 @@ contract("GRVCrowdsale", accounts => {
     });
 
     /**
+     * Renounce with old owner account
+     */
+    it("Renouncing with old owner", async () => {
+      await grvcrowdsale.renounceOwnership({ from: accounts[0] });
+      // Trying to mint with old owner after renounce (should revert)
+      assertRevert(grvtoken.mint(accounts[5], 1, { from: accounts[0] }));
+    });
+
+    /**
      * Renounce with owner account
      */
     it("Renouncing with owner", async () => {
       await grvcrowdsale.renounceOwnership({ from: accounts[0] });
-      // Trying to mint with old owner after renounce (should revert)
-      assertRevert(grvtoken.mint(accounts[5], 1, { from: accounts[0] }));
+      let actualOwner = await grvcrowdsale.owner();
+      assert.strictEqual(
+        actualOwner,
+        "0x0000000000000000000000000000000000000000",
+        "Wrong empty owner"
+      );
     });
   });
 
