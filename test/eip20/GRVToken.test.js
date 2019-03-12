@@ -237,8 +237,10 @@ contract("GRVToken", accounts => {
       await grvtoken.approve(accounts[0], 1, { from: accounts[1] });
       let allowed = await grvtoken.allowance(accounts[1], accounts[0]);
       assert.strictEqual(1, allowed.toNumber(), "Wrong allowance");
-      
-      await grvtoken.transferFrom(accounts[1], accounts[1], 1, {from: accounts[0]});
+
+      await grvtoken.transferFrom(accounts[1], accounts[1], 1, {
+        from: accounts[0]
+      });
       let value = await grvtoken.balanceOf(accounts[1]);
       assert.strictEqual(value.toNumber(), 1, "Wrong final balance");
     });
