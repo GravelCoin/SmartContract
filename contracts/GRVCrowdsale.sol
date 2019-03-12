@@ -256,11 +256,31 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     }
 
     /**
-      * @dev Allows the current owner to transfer control of the contract to a newOwner.
+      * @dev Allows the current owner to transfer control of the Token contract to a newOwner.
       * @param _newOwner The address to transfer ownership to.
       */
-    function transferOwnership(address _newOwner) public onlyOwner {
+    function transferOwnershipToken(address _newOwner) public onlyOwner {
         GRVToken(token).transferOwnership(_newOwner);
+    }
+
+    /**
+    * @dev called by the owner to pause, triggers stopped state
+    *
+    * Overriding from Pausable
+    */
+    function pause() onlyOwner whenNotPaused public {
+        state = State.Paused;
+        super.pause();
+    }
+
+    /**
+    * @dev called by the owner to unpause, returns to normal state
+    *
+    * Overriding from Pausable
+    */
+    function unpause() onlyOwner whenPaused public {
+        state = State.Active;
+        super.unpause();
     }
 
 }
