@@ -15,6 +15,15 @@ const TOKEN_OF_THE_SALE = 20833386;
 const INITIAL_SUPPLY =
   TOKEN_OF_THE_TEAM + TOKEN_OF_THE_ADVISOR + TOKEN_OF_THE_AIRDROP;
 
+function sleep(milliseconds) {
+    var start = new Date().getTime();
+    for (var i = 0; i < 1e7; i++) {
+        if (new Date().getTime() - start > milliseconds) {
+        break;
+        }
+    }
+}
+
 contract("GRVCrowdsale", accounts => {
   const owner = accounts[0];
   const walletTeam = accounts[1];
@@ -889,8 +898,7 @@ contract("GRVCrowdsale", accounts => {
   describe("Function withdraw", () => {
     it("Function withdrawTeam only after 2 predetermined period", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
 
       // Getting the team wallet balance
       let teamWallet = await grvtoken.balanceOf(walletTeam);
@@ -906,8 +914,7 @@ contract("GRVCrowdsale", accounts => {
 
     it("Function withdrawAdvisor only after predetermined period", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
 
       // Getting the team wallet balance
       let advisorWallet = await grvtoken.balanceOf(walletAdvisor);
@@ -931,8 +938,8 @@ contract("GRVCrowdsale", accounts => {
 
     it("Buy 2 tokens", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
+      
 
       // The value in ether to send to contract
       let valueFullPrice = 0.0005;
@@ -955,8 +962,8 @@ contract("GRVCrowdsale", accounts => {
 
     it("Forcing underflow", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
+      
 
       // The value in ether to send to contract
       let valueFullPrice = 0.0000000000000000000000000001;
@@ -971,8 +978,8 @@ contract("GRVCrowdsale", accounts => {
 
     it("Buy 0 tokens (revert)", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
+      
 
       // The value in ether to send to contract
       let valueFullPrice = 0;
@@ -987,8 +994,8 @@ contract("GRVCrowdsale", accounts => {
 
     it("Buy tokens without having the ether amount given", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
+      
 
       // The value in ether to send to contract
       let valueFullPrice = 200;
@@ -1028,7 +1035,7 @@ contract("GRVCrowdsale", accounts => {
       let isInitialized = await grvcrowdsale.preAllocate.call({
         from: accounts[0]
       });
-      assert.strictEqual(isInitialized, true);
+      
 
       // Trying to pause contract
       assertRevert(grvcrowdsale.pause({ from: accounts[6] }));
@@ -1039,7 +1046,7 @@ contract("GRVCrowdsale", accounts => {
       let isInitialized = await grvcrowdsale.preAllocate.call({
         from: accounts[0]
       });
-      assert.strictEqual(isInitialized, true);
+      
 
       // Pausing contract
       await grvcrowdsale.pause({ from: owner });
@@ -1052,7 +1059,7 @@ contract("GRVCrowdsale", accounts => {
       let isInitialized = await grvcrowdsale.preAllocate.call({
         from: accounts[0]
       });
-      assert.strictEqual(isInitialized, true);
+      
 
       // Buying 2 tokens
       let valueInvested = web3.toWei(0.0005, "ether");
@@ -1285,14 +1292,15 @@ contract("GRVCrowdsale", accounts => {
   describe("Scenario Testing", () => {
     it("Buy 10 tokens and assert important values", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
+      
+      let totalSupply = INITIAL_SUPPLY;
 
       // Getting the token left amount
       let tokenLeft = await grvcrowdsale.getTokenLeft();
       assert.strictEqual(
         tokenLeft.toNumber(),
-        blocks[0],
+        blocks[0] - totalSupply,
         "Wrong Tokens Left initial value"
       );
 
@@ -1399,14 +1407,14 @@ contract("GRVCrowdsale", accounts => {
       let tokenAmount6 = 0;
       let tokenAmount7 = 0;
       let tokenLeft;
+      let totalSupply = INITIAL_SUPPLY;
 
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
 
       // Getting token left
       tokenLeft = await grvcrowdsale.getTokenLeft();
-      assert.strictEqual(tokenLeft.toNumber(), blocks[0], "Wrong token left");
+      assert.strictEqual(tokenLeft.toNumber(), blocks[0] - totalSupply, "Wrong token left");
 
       // Verifying initial weiRaised value
       let weiRaised = await grvcrowdsale.weiRaised();
