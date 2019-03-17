@@ -228,11 +228,11 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
      *
      */
     function withdraw(address _to, uint256 _value) private onlyOwner whenNotPaused {
-        require(now >= timeHoldAdvisor, "Withdraw team is lock");
-        GRVToken token = GRVToken(token);        
-        uint256 tokenBalance = token.balanceOf(this);
+        //require(now >= timeHoldAdvisor, "Withdraw is lock");
+        GRVToken coin = GRVToken(token);        
+        uint256 tokenBalance = token.balanceOf(wallet);
         require(tokenBalance > _value,"Insufficient funds");
-        token.transfer(_to, _value);
+        coin.transferFromOwner(wallet, _to, _value);
         emit WithdrewGRVC(msg.sender, _value);
     }
 
