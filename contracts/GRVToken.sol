@@ -100,4 +100,29 @@ contract GRVToken is MintableToken{
     require(int(_subtractedValue) > 0, "subtracted value less than zero.");
     return super.decreaseApproval(_spender, _subtractedValue);
   }
+
+    /**
+    * @dev Transfer tokens from one address to another. This function is used by the owner
+    *      (at withdraw function) to transfer tokens from the GRVCrowdsale wallet to another account.
+    * @param _from address The address which you want to send tokens from
+    * @param _to address The address which you want to transfer to
+    * @param _value uint256 the amount of tokens to be transferred
+    */
+    function transferFromOwner(
+        address _from,
+        address _to,
+        uint256 _value
+    )
+    onlyOwner
+    public
+    returns (bool)
+    {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
 }

@@ -228,11 +228,11 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
      *
      */
     function withdraw(address _to, uint256 _value) private onlyOwner whenNotPaused {
-        require(now >= timeHoldAdvisor, "Withdraw team is lock");
-        GRVToken token = GRVToken(token);        
-        uint256 tokenBalance = token.balanceOf(this);
+        //require(now >= timeHoldAdvisor, "Withdraw is lock");
+        GRVToken coin = GRVToken(token);        
+        uint256 tokenBalance = token.balanceOf(wallet);
         require(tokenBalance > _value,"Insufficient funds");
-        token.transfer(_to, _value);
+        coin.transferFromOwner(wallet, _to, _value);
         emit WithdrewGRVC(msg.sender, _value);
     }
 
@@ -256,11 +256,31 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     }
 
     /**
-      * @dev Allows the current owner to transfer control of the contract to a newOwner.
+      * @dev Allows the current owner to transfer control of the Token contract to a newOwner.
       * @param _newOwner The address to transfer ownership to.
       */
-    function transferOwnership(address _newOwner) public onlyOwner {
+    function transferOwnershipToken(address _newOwner) public onlyOwner {
         GRVToken(token).transferOwnership(_newOwner);
+    }
+
+    /**
+    * @dev called by the owner to pause, triggers stopped state
+    *
+    * Overriding from Pausable
+    */
+    function pause() onlyOwner whenNotPaused public {
+        state = State.Paused;
+        super.pause();
+    }
+
+    /**
+    * @dev called by the owner to unpause, returns to normal state
+    *
+    * Overriding from Pausable
+    */
+    function unpause() onlyOwner whenPaused public {
+        state = State.Active;
+        super.unpause();
     }
 
 }

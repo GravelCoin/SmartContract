@@ -194,13 +194,27 @@ contract("GRVToken", accounts => {
      * FinishMinting with owner account. Need to work
      */
     it("FinishMinting with owner", async () => {
-      let mintingFinished = await grvtoken.mintingFinished.call({
+      // Asserting if can minting
+      let mintingFinished = await grvtoken.mintingFinished({
         from: accounts[5]
       });
       assert.strictEqual(mintingFinished, false);
+
+      // Finishing minting
       await grvtoken.finishMinting({ from: accounts[0] });
       mintingFinished = await grvtoken.mintingFinished.call();
       assert.strictEqual(mintingFinished, true);
+
+      // Asserting that can't mint anymore
+      mintingFinished = await grvtoken.mintingFinished();
+      assert.strictEqual(
+        mintingFinished,
+        true,
+        "mintingFinished should not be false"
+      );
+
+      // Asserting revert of mint call
+      assertRevert(grvtoken.mint(accounts[0], 10, { from: accounts[0] }));
     });
 
     /**
@@ -237,8 +251,10 @@ contract("GRVToken", accounts => {
       await grvtoken.approve(accounts[0], 1, { from: accounts[1] });
       let allowed = await grvtoken.allowance(accounts[1], accounts[0]);
       assert.strictEqual(1, allowed.toNumber(), "Wrong allowance");
-      
-      await grvtoken.transferFrom(accounts[1], accounts[1], 1, {from: accounts[0]});
+
+      await grvtoken.transferFrom(accounts[1], accounts[1], 1, {
+        from: accounts[0]
+      });
       let value = await grvtoken.balanceOf(accounts[1]);
       assert.strictEqual(value.toNumber(), 1, "Wrong final balance");
     });

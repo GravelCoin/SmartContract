@@ -21,7 +21,8 @@
   "devDependencies": {},
   "scripts": {
     "test": "truffle test test/eip20/GRVToken.test.js",
-    "testc": "truffle test test/eip20/GRVCrowdsale.test.js"
+    "testc": "truffle test test/eip20/GRVCrowdsale.test.js",
+    "testw": "truffle test test/eip20/GRVCrowdsale_withdraw.test.js"
   },
   "keywords": [],
   "author": "",

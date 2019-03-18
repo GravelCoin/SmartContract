@@ -15,6 +15,15 @@ const TOKEN_OF_THE_SALE = 20833386;
 const INITIAL_SUPPLY =
   TOKEN_OF_THE_TEAM + TOKEN_OF_THE_ADVISOR + TOKEN_OF_THE_AIRDROP;
 
+function sleep(milliseconds) {
+    var start = new Date().getTime();
+    for (var i = 0; i < 1e7; i++) {
+        if (new Date().getTime() - start > milliseconds) {
+        break;
+        }
+    }
+}
+
 contract("GRVCrowdsale", accounts => {
   const owner = accounts[0];
   const walletTeam = accounts[1];
@@ -60,7 +69,7 @@ contract("GRVCrowdsale", accounts => {
 
     // Alterei de await grvtoken.transferOwnership.call() -> o call estava dando erro
     await grvtoken.transferOwnership(grvcrowdsale.address, {
-      from: owner
+      from: accounts[0]
     });
   });
 
@@ -73,32 +82,29 @@ contract("GRVCrowdsale", accounts => {
      */
     it("Verifying contract owner", async () => {
       // Getting the contract owner registered
-      let actualOwner = await grvcrowdsale.owner();
+      let actualOwner = await grvtoken.owner();
       // Asserting that account[0] == owner
-      assert.strictEqual(actualOwner, owner, "Wrong initial owner");
-
-      // Transfering ownership
-      await grvcrowdsale.transferOwnership(accounts[1], {
-        from: owner
-      });
-
-      actualOwner = await grvcrowdsale.owner();
-      assert.strictEqual(actualOwner, accounts[1], "Wrong second owner");
-
-      // Transfering ownership
-      await grvcrowdsale.transferOwnership(accounts[2], {
-        from: accounts[1]
-      });
-      actualOwner = await grvcrowdsale.owner();
-      assert.strictEqual(actualOwner, accounts[2], "Wrong third owner");
-
-      // Transfering ownership
-      await grvcrowdsale.renounceOwnership({ from: accounts[2] });
-      actualOwner = await grvcrowdsale.owner();
       assert.strictEqual(
         actualOwner,
-        "0x0000000000000000000000000000000000000000",
-        "Wrong empty owner"
+        grvcrowdsale.address,
+        "Wrong initial owner"
+      );
+
+      // Transfering ownership
+      await grvcrowdsale.transferOwnershipToken(accounts[1], {
+        from: accounts[0]
+      });
+
+      // Asserting actual owner
+      actualOwner = await grvtoken.owner();
+      assert.strictEqual(actualOwner, accounts[1], "Wrong second owner");
+
+      // Transfering ownership, this time the crowdsale is not Token owner anymore
+      // This means that this transference should revert, even if I'm calling with crowdsale owner
+      assertRevert(
+        grvcrowdsale.transferOwnershipToken(accounts[2], {
+          from: accounts[0]
+        })
       );
     });
 
@@ -128,7 +134,7 @@ contract("GRVCrowdsale", accounts => {
       assert.strictEqual(accounts[0], wallet);
 
       // Transfering ownership
-      await grvcrowdsale.transferOwnership(accounts[1], {
+      await grvcrowdsale.transferOwnershipToken(accounts[1], {
         from: owner
       });
 
@@ -190,10 +196,9 @@ contract("GRVCrowdsale", accounts => {
      */
     it("Verifying initial Tokens of the owner", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({
+      await grvcrowdsale.preAllocate({
         from: accounts[0]
       });
-      assert.strictEqual(isInitialized, true);
 
       let value = await grvtoken.balanceOf(accounts[0]);
       assert.strictEqual(value.toNumber(), INITIAL_SUPPLY);
@@ -243,8 +248,19 @@ contract("GRVCrowdsale", accounts => {
      * Verifying the initial state value (Unknown)
      */
     it("Verifying State", async () => {
-      let value = await grvcrowdsale.state.call();
-      assert.strictEqual(0, value.toNumber());
+      let value = await grvcrowdsale.state();
+      assert.strictEqual(0, value.toNumber(), "Wrong initial state (Unknown)");
+
+      // inicializa o contrato alocando os valores para o team, advisor, airdrop ...
+      await grvcrowdsale.preAllocate({ from: owner });
+
+      // Getting state value, shoud be 2 {Active}
+      let state = await grvcrowdsale.state();
+      assert.strictEqual(
+        state.toNumber(),
+        2,
+        "Wrong state value after preAllocate (Active)"
+      );
     });
 
     /**
@@ -335,46 +351,20 @@ contract("GRVCrowdsale", accounts => {
     });
 
     /**
-     * Verifying State after preAllocate
+     * Verifying TotalInitialSupply after preAllocate
      */
-    it("Verifying state", async () => {
-      // inicializa o contrato alocando os valores para o team, advisor, airdrop ...
-      let isInitialize = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(
-        isInitialize,
-        true,
-        "Error, preAllocate not executed."
-      );
+      it("Verifying totalInitialSupply", async () => {
+          // inicializa o contrato alocando os valores para o team, advisor, airdrop ...
+          await grvcrowdsale.preAllocate({ from: owner });
 
-      // Getting state value, shoud be 2 {Active}
-      let state = await grvcrowdsale.state();
-      assert.strictEqual(
-        state.toNumber(),
-        2,
-        "Wrong state value after preAllocate."
-      );
-    });
-
-    /**
-     * Verifying TotalSupply after preAllocate
-     */
-    it("Verifying totalSupply", async () => {
-      // inicializa o contrato alocando os valores para o team, advisor, airdrop ...
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(
-        isInitialized,
-        true,
-        "Error, preAllocate not executed."
-      );
-
-      // Getting total supply value
-      let totalSupply = await grvtoken.totalSupply();
-      assert.strictEqual(
-        totalSupply.toNumber(),
-        INITIAL_SUPPLY + TOKEN_OF_THE_SALE,
-        "Wrong totalSupply value."
-      );
-    });
+          // Getting total supply value
+          let totalSupply = await grvcrowdsale.totalInitialSupply();
+          assert.strictEqual(
+              totalSupply.toNumber(),
+              INITIAL_SUPPLY + TOKEN_OF_THE_SALE,
+              "Wrong totalInitialSupply value."
+          );
+      });
   });
 
   /**
@@ -678,186 +668,228 @@ contract("GRVCrowdsale", accounts => {
       assert.strictEqual(blocks[2], value.toNumber());
     });
 
-    it("Continuous sale", async () => {
-      const purchaser = accounts[5];
-      let amountTokenSale = 0;
-      // verifica o owner
-      let newOwner = await grvtoken.owner.call();
-      assert.strictEqual(
-        grvcrowdsale.address,
-        newOwner,
-        "TransferOwnership of the GRVToken fail"
-      );
-      // inicializa o contrato alocando os valores para o team, advisor, airdrop ...
-      let isInitialize = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialize, true);
-      // verifica o block corrente = 0
-      let currentBlock = await grvcrowdsale.currentBlock.call();
-      assert.strictEqual(
-        currentBlock.toNumber(),
-        0,
-        "Expected current block fail 0"
-      );
+      it("Continuous sale", async () => {
+          let totalSupply = INITIAL_SUPPLY;
+          const purchaser = accounts[5];
+          let amountTokenSale = 0;
+          // verifica o owner
+          let newOwner = await grvtoken.owner.call();
+          assert.strictEqual(
+              grvcrowdsale.address,
+              newOwner,
+              "TransferOwnership of the GRVToken fail"
+          );
 
-      // identifica todos os tokens restantes do primeiro bloco
-      let tokenLeft = await grvcrowdsale.getTokenLeft.call();
-      let expectedTokenLeft = blocks[currentBlock.toNumber()] - INITIAL_SUPPLY;
-      assert.strictEqual(
-        tokenLeft.toNumber(),
-        expectedTokenLeft,
-        "Expected token left fail 0"
-      );
+          //Verificando estado
+          let state = await grvcrowdsale.state();
+          assert.strictEqual(
+              state.toNumber(),
+              0,
+              "Wrong initial contract state (Unknown)"
+          );
 
-      // verifica o preco corrente
-      let currentRate = await grvcrowdsale.getCurrentRate.call();
-      let expectedCurrentRate =
-        (blocksPrice[currentBlock.toNumber()] * oneTokenInWei) / 100;
-      assert.strictEqual(
-        currentRate.toNumber(),
-        expectedCurrentRate,
-        "Expected current rate fail"
-      );
+          // inicializa o contrato alocando os valores para o team, advisor, airdrop ...
+          await grvcrowdsale.preAllocate({ from: owner });
 
-      // verifica se a quantidade de token corresponde ao valor enviado .
-      let beforeSaleBalance = await grvtoken.balanceOf.call(purchaser);
-      const emptyValue = 0;
-      assert.strictEqual(
-        beforeSaleBalance.toNumber(),
-        emptyValue,
-        "Before Sale Balance fail"
-      );
-      // investidor compra todos os GRVCs do bloco
-      await grvcrowdsale.sendTransaction({
-        value: expectedTokenLeft * expectedCurrentRate,
-        from: purchaser
+          //Verificando estado
+          state = await grvcrowdsale.state();
+          assert.strictEqual(state.toNumber(), 2, "Wrong contract state (Active)");
+
+          // verifica o block corrente = 0
+          let currentBlock = await grvcrowdsale.currentBlock.call();
+          assert.strictEqual(
+              currentBlock.toNumber(),
+              0,
+              "Expected current block fail 0"
+          );
+
+          // identifica todos os tokens restantes do primeiro bloco
+          let tokenLeft = await grvcrowdsale.getTokenLeft.call();
+          let expectedTokenLeft = blocks[currentBlock.toNumber()] - totalSupply;
+          assert.strictEqual(
+              tokenLeft.toNumber(),
+              expectedTokenLeft,
+              "Expected token left fail 0"
+          );
+
+          // verifica o preco corrente
+          let currentRate = await grvcrowdsale.getCurrentRate.call();
+          let expectedCurrentRate =
+              (blocksPrice[currentBlock.toNumber()] * oneTokenInWei) / 100;
+          assert.strictEqual(
+              currentRate.toNumber(),
+              expectedCurrentRate,
+              "Expected current rate fail"
+          );
+
+          // verifica se a quantidade de token corresponde ao valor enviado .
+          let beforeSaleBalance = await grvtoken.balanceOf.call(purchaser);
+          const emptyValue = 0;
+          assert.strictEqual(
+              beforeSaleBalance.toNumber(),
+              emptyValue,
+              "Before Sale Balance fail"
+          );
+          // investidor compra todos os GRVCs do bloco
+          await grvcrowdsale.sendTransaction({
+              value: expectedTokenLeft * expectedCurrentRate,
+              from: purchaser
+          });
+          amountTokenSale += expectedTokenLeft;
+          totalSupply += expectedTokenLeft;
+
+          // verifica se a quantidade de token corresponde ao valor enviado .
+          let afterSaleBalance = await grvtoken.balanceOf.call(purchaser);
+          assert.strictEqual(
+              afterSaleBalance.toNumber(),
+              amountTokenSale,
+              "After Sale Balance fail"
+          );
+
+          // Pausando o contrato
+          await grvcrowdsale.pause({ from: accounts[0] });
+
+          //Verificando estado
+          state = await grvcrowdsale.state();
+          assert.strictEqual(state.toNumber(), 3, "Wrong contract state (Paused)");
+
+          // Despausando o contrato
+          await grvcrowdsale.unpause({ from: accounts[0] });
+
+          //Verificando estado
+          state = await grvcrowdsale.state();
+          assert.strictEqual(state.toNumber(), 2, "Wrong contract state (Active)");
+
+          // verifica se bloco corrente agora = 1
+          currentBlock = await grvcrowdsale.currentBlock.call();
+          assert.strictEqual(
+              currentBlock.toNumber(),
+              1,
+              "Expected current block fail"
+          );
+
+          // identifica todos os tokens restantes do segundo bloco
+          tokenLeft = await grvcrowdsale.getTokenLeft.call();
+          expectedTokenLeft = blocks[currentBlock.toNumber()] - totalSupply;
+          assert.strictEqual(
+              tokenLeft.toNumber(),
+              expectedTokenLeft,
+              "Expected token left fail 1"
+          );
+
+          // verifica o preco corrente
+          currentRate = await grvcrowdsale.getCurrentRate.call();
+          expectedCurrentRate =
+              (blocksPrice[currentBlock.toNumber()] * oneTokenInWei) / 100;
+          assert.strictEqual(
+              currentRate.toNumber(),
+              expectedCurrentRate,
+              "Expected current rate fail"
+          );
+
+          // investidor compra todos os GRVCs do segundo bloco
+          await grvcrowdsale.sendTransaction({
+              value: expectedTokenLeft * expectedCurrentRate,
+              from: purchaser
+          });
+          amountTokenSale += expectedTokenLeft;
+          totalSupply += expectedTokenLeft;
+
+          // verifica se a quantidade de token corresponde ao valor enviado .
+          afterSaleBalance = await grvtoken.balanceOf.call(purchaser);
+          assert.strictEqual(
+              afterSaleBalance.toNumber(),
+              amountTokenSale,
+              "After Sale Balance fail"
+          );
+
+          // verifica se bloco corrente agora = 2
+          currentBlock = await grvcrowdsale.currentBlock.call();
+          assert.strictEqual(
+              currentBlock.toNumber(),
+              2,
+              "Expected current block fail"
+          );
+
+          // identifica todos os tokens restantes do terceiro bloco
+          tokenLeft = await grvcrowdsale.getTokenLeft.call();
+          expectedTokenLeft = blocks[currentBlock.toNumber()] - totalSupply;
+          assert.strictEqual(
+              tokenLeft.toNumber(),
+              expectedTokenLeft,
+              "Expected token left fail 2"
+          );
+
+          // verifica o preco corrente
+          currentRate = await grvcrowdsale.getCurrentRate.call();
+          expectedCurrentRate =
+              (blocksPrice[currentBlock.toNumber()] * oneTokenInWei) / 100;
+          assert.strictEqual(
+              currentRate.toNumber(),
+              expectedCurrentRate,
+              "Expected current rate fail"
+          );
+
+          // investidor compra todos os GRVCs do bloco
+          await grvcrowdsale.sendTransaction({
+              value: expectedTokenLeft * expectedCurrentRate,
+              from: purchaser
+          });
+          amountTokenSale += expectedTokenLeft;
+          // verifica se a quantidade de token corresponde ao valor enviado .
+          afterSaleBalance = await grvtoken.balanceOf.call(purchaser);
+          assert.strictEqual(
+              afterSaleBalance.toNumber(),
+              amountTokenSale,
+              "After Sale Balance fail"
+          );
+
+          // verifica se o bloco corrente agora = 3
+          currentBlock = await grvcrowdsale.currentBlock.call();
+          assert.strictEqual(
+              currentBlock.toNumber(),
+              3,
+              "Expected current block fail"
+          );
+
+          // verifica o preco corrente. Deve ser preço cheio pois não existem mais blocos (currentBlock == MAX_BLOCKS_CROWDSALE)
+          currentRate = await grvcrowdsale.getCurrentRate.call();
+          expectedCurrentRate = oneTokenInWei;
+          assert.strictEqual(
+              currentRate.toNumber(),
+              expectedCurrentRate.toNumber(),
+              "Expected current rate fail"
+          );
+
+          await grvcrowdsale.mintToken(20, { from: accounts[0] });
+          let value = await grvtoken.balanceOf.call(accounts[0]);
+          assert.strictEqual(
+              value.toNumber(),
+              INITIAL_SUPPLY + 20,
+              "Wrong minted value."
+          );
+
+          // Essa parte do teste ainda precisa atualizar, precisa-se saber o que acontece quando os tokens
+          // de todos os blocos acabam.
+          // investidor compra 1 eth em GRVC. O valor de cado GRVC deve ser cheio, sem deconto.
+          /*let supp = await grvcrowdsale.getTokenLeft();
+          console.log("--------------" + supp);
+          let fullPrice = 0.0005;
+          let valueFullPrice = 10 * fullPrice;
+          await grvcrowdsale.sendTransaction({
+            value: web3.toWei(fullPrice, "ether"),
+            from: purchaser
+          });*/
+          /*amountTokenSale += valueFullPrice / fullPrice; //2000;
+          // verifica se a quantidade de token corresponde ao valor enviado .
+          afterSaleBalance = await grvtoken.balanceOf.call(purchaser);
+          assert.strictEqual(
+            afterSaleBalance.toNumber(),
+            amountTokenSale,
+            "After Sale Balance fail"
+          );*/
       });
-      amountTokenSale += expectedTokenLeft;
-      // verifica se a quantidade de token corresponde ao valor enviado .
-      let afterSaleBalance = await grvtoken.balanceOf.call(purchaser);
-      assert.strictEqual(
-        afterSaleBalance.toNumber(),
-        amountTokenSale,
-        "After Sale Balance fail"
-      );
-
-      // verifica se bloco corrente agora = 1
-      currentBlock = await grvcrowdsale.currentBlock.call();
-      assert.strictEqual(
-        currentBlock.toNumber(),
-        1,
-        "Expected current block fail"
-      );
-
-      // identifica todos os tokens restantes do segundo bloco
-      tokenLeft = await grvcrowdsale.getTokenLeft.call();
-      expectedTokenLeft =
-        blocks[currentBlock.toNumber()] - blocks[currentBlock.toNumber() - 1];
-      assert.strictEqual(
-        tokenLeft.toNumber(),
-        expectedTokenLeft,
-        "Expected token left fail 1"
-      );
-
-      // verifica o preco corrente
-      currentRate = await grvcrowdsale.getCurrentRate.call();
-      expectedCurrentRate =
-        (blocksPrice[currentBlock.toNumber()] * oneTokenInWei) / 100;
-      assert.strictEqual(
-        currentRate.toNumber(),
-        expectedCurrentRate,
-        "Expected current rate fail"
-      );
-
-      // investidor compra todos os GRVCs do segundo bloco
-      await grvcrowdsale.sendTransaction({
-        value: expectedTokenLeft * expectedCurrentRate,
-        from: purchaser
-      });
-      amountTokenSale += expectedTokenLeft;
-
-      // verifica se a quantidade de token corresponde ao valor enviado .
-      afterSaleBalance = await grvtoken.balanceOf.call(purchaser);
-      assert.strictEqual(
-        afterSaleBalance.toNumber(),
-        amountTokenSale,
-        "After Sale Balance fail"
-      );
-
-      // verifica se bloco corrente agora = 2
-      currentBlock = await grvcrowdsale.currentBlock.call();
-      assert.strictEqual(
-        currentBlock.toNumber(),
-        2,
-        "Expected current block fail"
-      );
-
-      // identifica todos os tokens restantes do primeiro bloco
-      tokenLeft = await grvcrowdsale.getTokenLeft.call();
-      expectedTokenLeft = blocks[currentBlock.toNumber()] - INITIAL_SUPPLY;
-      assert.strictEqual(
-        tokenLeft.toNumber(),
-        expectedTokenLeft,
-        "Expected token left fail 2"
-      );
-
-      // verifica o preco corrente
-      currentRate = await grvcrowdsale.getCurrentRate.call();
-      expectedCurrentRate =
-        (blocksPrice[currentBlock.toNumber()] * oneTokenInWei) / 100;
-      assert.strictEqual(
-        currentRate.toNumber(),
-        expectedCurrentRate,
-        "Expected current rate fail"
-      );
-
-      // investidor compra todos os GRVCs do bloco
-      await grvcrowdsale.sendTransaction({
-        value: expectedTokenLeft * expectedCurrentRate,
-        from: purchaser
-      });
-      amountTokenSale += expectedTokenLeft;
-      // verifica se a quantidade de token corresponde ao valor enviado .
-      afterSaleBalance = await grvtoken.balanceOf.call(purchaser);
-      assert.strictEqual(
-        afterSaleBalance.toNumber(),
-        amountTokenSale,
-        "After Sale Balance fail"
-      );
-
-      // verifica se o bloco corrente agora = 3
-      currentBlock = await grvcrowdsale.currentBlock.call();
-      assert.strictEqual(
-        currentBlock.toNumber(),
-        3,
-        "Expected current block fail"
-      );
-
-      // verifica o preco corrente. Deve ser preço cheio pois não existem mais blocos (currentBlock == MAX_BLOCKS_CROWDSALE)
-      currentRate = await grvcrowdsale.getCurrentRate.call();
-      expectedCurrentRate = oneTokenInWei;
-      assert.strictEqual(
-        currentRate.toNumber(),
-        expectedCurrentRate,
-        "Expected current rate fail"
-      );
-
-      // investidor compra 1 eth em GRVC. O valor de cado GRVC deve ser cheio, sem deconto.
-      let valueFullPrice = 10;
-      let fullPrice = 0.0005;
-      await grvcrowdsale.sendTransaction({
-        value: web3.toWei(valueFullPrice, "ether"),
-        from: purchaser
-      });
-      amountTokenSale += valueFullPrice / fullPrice; //2000;
-      // verifica se a quantidade de token corresponde ao valor enviado .
-      afterSaleBalance = await grvtoken.balanceOf.call(purchaser);
-      assert.strictEqual(
-        afterSaleBalance.toNumber(),
-        amountTokenSale,
-        "After Sale Balance fail"
-      );
     });
-  });
 
   /**
    * Testing withdraws
@@ -866,8 +898,7 @@ contract("GRVCrowdsale", accounts => {
   describe("Function withdraw", () => {
     it("Function withdrawTeam only after 2 predetermined period", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
 
       // Getting the team wallet balance
       let teamWallet = await grvtoken.balanceOf(walletTeam);
@@ -883,8 +914,7 @@ contract("GRVCrowdsale", accounts => {
 
     it("Function withdrawAdvisor only after predetermined period", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
 
       // Getting the team wallet balance
       let advisorWallet = await grvtoken.balanceOf(walletAdvisor);
@@ -908,8 +938,8 @@ contract("GRVCrowdsale", accounts => {
 
     it("Buy 2 tokens", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
+      
 
       // The value in ether to send to contract
       let valueFullPrice = 0.0005;
@@ -932,8 +962,8 @@ contract("GRVCrowdsale", accounts => {
 
     it("Forcing underflow", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
+      
 
       // The value in ether to send to contract
       let valueFullPrice = 0.0000000000000000000000000001;
@@ -948,8 +978,8 @@ contract("GRVCrowdsale", accounts => {
 
     it("Buy 0 tokens (revert)", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
+      
 
       // The value in ether to send to contract
       let valueFullPrice = 0;
@@ -964,8 +994,8 @@ contract("GRVCrowdsale", accounts => {
 
     it("Buy tokens without having the ether amount given", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
+      
 
       // The value in ether to send to contract
       let valueFullPrice = 200;
@@ -1005,7 +1035,7 @@ contract("GRVCrowdsale", accounts => {
       let isInitialized = await grvcrowdsale.preAllocate.call({
         from: accounts[0]
       });
-      assert.strictEqual(isInitialized, true);
+      
 
       // Trying to pause contract
       assertRevert(grvcrowdsale.pause({ from: accounts[6] }));
@@ -1016,7 +1046,7 @@ contract("GRVCrowdsale", accounts => {
       let isInitialized = await grvcrowdsale.preAllocate.call({
         from: accounts[0]
       });
-      assert.strictEqual(isInitialized, true);
+      
 
       // Pausing contract
       await grvcrowdsale.pause({ from: owner });
@@ -1029,7 +1059,7 @@ contract("GRVCrowdsale", accounts => {
       let isInitialized = await grvcrowdsale.preAllocate.call({
         from: accounts[0]
       });
-      assert.strictEqual(isInitialized, true);
+      
 
       // Buying 2 tokens
       let valueInvested = web3.toWei(0.0005, "ether");
@@ -1181,7 +1211,7 @@ contract("GRVCrowdsale", accounts => {
      */
     it("Trying to transfer with not owner", async () => {
       assertRevert(
-        grvcrowdsale.transferOwnership(accounts[5], { from: accounts[1] })
+        grvcrowdsale.transferOwnershipToken(accounts[5], { from: accounts[1] })
       );
     });
 
@@ -1190,7 +1220,7 @@ contract("GRVCrowdsale", accounts => {
      */
     it("Trying to transfer with an invalid account", async () => {
       assertRevert(
-        grvcrowdsale.transferOwnership(accounts[5], { from: notAccount })
+        grvcrowdsale.transferOwnershipToken(accounts[5], { from: notAccount })
       );
     });
 
@@ -1199,7 +1229,7 @@ contract("GRVCrowdsale", accounts => {
      */
     it("Trying to transfer to an invalid account", async () => {
       assertRevert(
-        grvcrowdsale.transferOwnership(notAccount, { from: accounts[0] })
+        grvcrowdsale.transferOwnershipToken(notAccount, { from: accounts[0] })
       );
     });
 
@@ -1207,11 +1237,14 @@ contract("GRVCrowdsale", accounts => {
      * Transfering ownership and asserting it
      */
     it("Transfering ownership and asserting it", async () => {
-      await grvcrowdsale.transferOwnership(accounts[5], {
+      await grvcrowdsale.transferOwnershipToken(accounts[5], {
         from: accounts[0]
       });
       assertRevert(grvtoken.mint(accounts[5], 15, { from: accounts[0] }));
+
+      // Minting with new owner
       await grvtoken.mint(accounts[0], 16, { from: accounts[5] });
+      // Asserting beneficiary balance
       let value = await grvtoken.balanceOf(accounts[0]);
       assert.strictEqual(value.toNumber(), 16, "Wrong value minted.");
     });
@@ -1259,14 +1292,15 @@ contract("GRVCrowdsale", accounts => {
   describe("Scenario Testing", () => {
     it("Buy 10 tokens and assert important values", async () => {
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
+      
+      let totalSupply = INITIAL_SUPPLY;
 
       // Getting the token left amount
       let tokenLeft = await grvcrowdsale.getTokenLeft();
       assert.strictEqual(
         tokenLeft.toNumber(),
-        blocks[0],
+        blocks[0] - totalSupply,
         "Wrong Tokens Left initial value"
       );
 
@@ -1373,14 +1407,14 @@ contract("GRVCrowdsale", accounts => {
       let tokenAmount6 = 0;
       let tokenAmount7 = 0;
       let tokenLeft;
+      let totalSupply = INITIAL_SUPPLY;
 
       //Initializing contract
-      let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      assert.strictEqual(isInitialized, true);
+      await grvcrowdsale.preAllocate({ from: owner });
 
       // Getting token left
       tokenLeft = await grvcrowdsale.getTokenLeft();
-      assert.strictEqual(tokenLeft.toNumber(), blocks[0], "Wrong token left");
+      assert.strictEqual(tokenLeft.toNumber(), blocks[0] - totalSupply, "Wrong token left");
 
       // Verifying initial weiRaised value
       let weiRaised = await grvcrowdsale.weiRaised();
@@ -1571,29 +1605,6 @@ contract("GRVCrowdsale", accounts => {
         tokenAmount7,
         "Wrong tokenAmount value, account 7"
       );
-    });
-
-    it("Minting, ownership", async () => {
-      //let wallet5 = 0;
-      //let wallet = 0;
-
-      //Initializing contract
-      //let isInitialized = await grvcrowdsale.preAllocate.call({ from: owner });
-      //assert.strictEqual(isInitialized, true);
-
-      // Asserting totalSupply
-      //let totalSupply = await grvtoken.totalSupply();
-      //console.log(totalSupply.toNumber());
-
-      // Minting 10 tokens to account 5
-      await grvtoken.mint(accounts[0], 1, { from: accounts[0] });
-      //wallet5 = 10;
-      /*let value = await grvtoken.balanceOf(accounts[5]);
-          assert.strictEqual(
-            value.toNumber(),
-            wallet5,
-            "Wrong account 5 balance after minting"
-          );*/
     });
   });
 });
