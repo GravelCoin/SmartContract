@@ -2,12 +2,13 @@ pragma solidity ^0.4.23;
 
 import "../node_modules/zeppelin-solidity/contracts/token/ERC20/MintableToken.sol";
 import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../node_modules/zeppelin-solidity/contracts/token/ERC20/PausableToken.sol";
 
 /**
  * Token of Gravel Token.
  *
  */
-contract GRVToken is MintableToken{
+contract GRVToken is MintableToken, PausableToken{
     using SafeMath for uint256;
    
     string public constant name = "Gravel Coin";
