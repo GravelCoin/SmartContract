@@ -270,6 +270,8 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     */
     function pause() onlyOwner whenNotPaused public {
         state = State.Paused;
+        // pause token
+        GRVToken(token).pause();
         super.pause();
     }
 
@@ -280,6 +282,8 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     */
     function unpause() onlyOwner whenPaused public {
         state = State.Active;
+        // unpause token.
+        GRVToken(token).unpause();
         super.unpause();
     }
 
