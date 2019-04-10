@@ -31,14 +31,14 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
     // Crowdsale opening time
     uint256 public openingTime;
     // FIXME: change times
-    uint256 public timeHoldTeam    = 2 days;//183 days;
-    uint256 public timeHoldAdvisor = 1 days;//365 days;
+    uint256 public timeHoldTeam    = 183 days; //Test value: 2 days;
+    uint256 public timeHoldAdvisor = 365 days;//Test value: 1 days;
 
     // FIXME: change values of the team and advisor.
-    uint256 public constant TOKEN_OF_THE_TEAM       = 12500000;
-    uint256 public constant TOKEN_OF_THE_ADVISOR    = 6666667;
-    uint256 public constant TOKEN_OF_THE_AIRDROP    = 1666667;
-    uint256 public constant TOKEN_OF_THE_SALE       = 20833386;//62500000;
+    uint256 public constant TOKEN_OF_THE_TEAM       = 8499375; //Test value: 12500000;
+    uint256 public constant TOKEN_OF_THE_ADVISOR    = 5666250; //Test value: 6666667;
+    uint256 public constant TOKEN_OF_THE_AIRDROP    = 3777500; //Test value: 1666667;
+    uint256 public constant TOKEN_OF_THE_SALE       = 75550000;//Test value: 20833386;//62500000;
     // Initial token supply...
     uint256 public constant INITIAL_SUPPLY = TOKEN_OF_THE_TEAM + TOKEN_OF_THE_ADVISOR + TOKEN_OF_THE_AIRDROP;
     // initial totalSupply planned ...
