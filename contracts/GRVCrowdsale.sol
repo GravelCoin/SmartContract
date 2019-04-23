@@ -201,7 +201,7 @@ contract GRVCrowdsale is IncreasingPriceCrowdsale, Pausable{
             // mint GRV of the advisor
             coin.mint(owner, TOKEN_OF_THE_ADVISOR);
             // mint GRV of the AIRDROP
-            coin.mint(owner, TOKEN_OF_THE_AIRDROP);                
+            coin.mint(walletAirdrop, TOKEN_OF_THE_AIRDROP);                
             state = State.Active;
             return true;
         } else{
