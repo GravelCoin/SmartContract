@@ -18,7 +18,9 @@
     "truffle-hdwallet-provider": "0.0.6",
     "zeppelin-solidity": "1.10.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "dotenv": "^7.0.0"
+  },
   "scripts": {
     "test": "truffle test test/eip20/GRVToken.test.js",
     "testc": "truffle test test/eip20/GRVCrowdsale.test.js",

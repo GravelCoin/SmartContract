@@ -1,77 +1,49 @@
-/*
- * NB: since truffle-hdwallet-provider 0.0.5 you must wrap HDWallet providers in a 
- * function when declaring them. Failure to do so will cause commands to hang. ex:
- * ```
- * mainnet: {
- *     provider: function() { 
- *       return new HDWalletProvider(mnemonic, 'https://mainnet.infura.io/<infura-key>') 
- *     },
- *     network_id: '1',
- *     gas: 4500000,
- *     gasPrice: 10000000000,
- *   },
- */
-
-//var HDWalletProvider = require("truffle-hdwallet-provider");
-//var infura_apikey = "XXXXXX";
-var mnemonic = "slab little know elegant pizza voyage quiz churn rare camp";
+var HDWalletProvider = require("truffle-hdwallet-provider");
+require("dotenv").config();
+var INFURA_API_KEY = process.env["INFURA_API_KEY"];
+var MNEMONIC = process.env["MNENOMIC"];
 
 module.exports = {
-  // See <http://truffleframework.com/docs/advanced/configuration>
-  // to customize your Truffle configuration!
   networks: {
     development:{
       host: "localhost",
       //port: 7545,
       port: 8545,
       network_id: "5777",
-      gas: 4500000,
+      gas: 5000000,
       gasPrice: 1000000
     },
     ropsten: {
       provider: function() {
-        return new HDWalletProvider(mnemonic, "https://ropsten.infura.io/v3/4e7b3f34bc3c409fa0988f1347ef3d94");
+        return new HDWalletProvider(MNEMONIC, "https://ropsten.infura.io/" + INFURA_API_KEY);
       },
       network_id: '3',
+      gas: 5000000,
+      gasPrice: 1000000
+    },
+    rinkeby: {
+      provider: function() {
+        return new HDWalletProvider(MNEMONIC, "https://rinkeby.infura.io/" + INFURA_API_KEY)
+      },
+      network_id: '4',
+      gas: 5000000,      //make sure this gas allocation isn't over 4M, which is the max      
+      gasPrice: 1000000
+    },
+    kovan: {
+      provider: function() {
+        return new HDWalletProvider(MNEMONIC, "https://kovan.infura.io/" + INFURA_API_KEY)
+      },
+      network_id: '5',
+      gas: 5000000,      //make sure this gas allocation isn't over 4M, which is the max      
+      gasPrice: 1000000
+    },
+    mainnet: {
+      provider: function() {
+        return new HDWalletProvider(MNEMONIC, "https://mainnet.infura.io/" + INFURA_API_KEY)
+      },
+      network_id: '1',
+      gas: 5000000,      //make sure this gas allocation isn't over 4M, which is the max      
+      gasPrice: 1000000
     }
   }
 };
-
-/*
-var HDWalletProvider = require("truffle-hdwallet-provider");
-
-var mnemonic = "opinion destroy betray ...";
-
-
-module.exports = {
-  // See <http://truffleframework.com/docs/advanced/configuration>
-  // to customize your Truffle configuration!
-  networks: {
-    live: {
-      network_id: 1 // Ethereum public network
-      // optional config values
-      // host - defaults to "localhost"
-      // port - defaults to 8545
-      // gas
-      // gasPrice
-      // from - default address to use for any transaction Truffle makes during migrations
-    },
-    ropsten: {
-      provider: new HDWalletProvider(mnemonic, 'https://ropsten.infura.io'),
-      network_id: '3'
-    },
-    testrpc: {
-      network_id: 'default',
-      gas: 1000000,
-      gasPrice: 10000000000
-    },
-    coverage: {
-      host: "localhost",
-      network_id: "*",
-      port: 8555,        
-      gas: 0xfffffffffff,
-      gasPrice: 0x01     
-    },
-  }
-};
-*/
