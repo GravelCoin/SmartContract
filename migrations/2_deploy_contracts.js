@@ -7,16 +7,16 @@ const BigNumber = web3.BigNumber;
 
 module.exports = function(deployer, network, accounts) {
   const owner = accounts[0];
-  /*
-  const walletTeam = '0xe169B67CC506152bdb6e2dF4598644816376608e';//accounts[1];
-  const walletAdvisor = '0xC7BBF5545b0272e353998C64882833160a13f607';//accounts[2];
-  const walletAirdrop = '0xd414064cA37b675ed7E7Ef9Da291969CA1391e48';//accounts[3];
-  */
- 
-  const walletTeam    = accounts[1];
+  
+  const walletTeam    = process.env["WALLET_TEAM"];
+  const walletAdvisor = process.env["WALLET_ADVISOR"];
+  const walletAirdrop = process.env["WALLET_AIRDROP"];
+  
+ /*
+  const walletTeam = accounts[1];
   const walletAdvisor = accounts[2];
   const walletAirdrop = accounts[3];
-
+*/
   const getLatestBlockTimestamp = () =>
     new Promise((resolve, reject) => {
       web3.eth.getBlock("latest", (err, block) => {
@@ -35,7 +35,7 @@ module.exports = function(deployer, network, accounts) {
    // openingTime = timestamp;
   });
 
-  openingTime = 1555959643;
+  openingTime = 1556844876;
 
   while(openingTime == undefined){
     console.log("wait for timestamp");
